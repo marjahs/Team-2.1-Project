@@ -1,4 +1,5 @@
-import path from "path";
+import path from "node:path";
+import type { IEventController } from "./events/EventController";
 import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
@@ -36,6 +37,7 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly eventController: IEventController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -172,13 +174,26 @@ class ExpressApp implements IApp {
       // ✅ FIXED LINE HERE
       if (result.ok === false) {
         return res.status(400).render("partials/error", {
-          message: result.error.message,
+          message: result.value.message,
           layout: false,
         });
       }
-
       return res.redirect(`/events/${result.value.id}`);
     }));
+
+    this.app.get(
+      "/events/filter",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        await this.eventController.filterEvents(req, res);
+      }),
+    );
+
+    // ── Error handler ────────────────────────────────────────────────
+     
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
       res.status(500).render("partials/error", {
@@ -195,7 +210,8 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  eventController: IEventController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, eventController, logger);
 }
