@@ -1,5 +1,5 @@
-import { Event } from './Event'
-import { EventFilter, EventRepository } from './EventRepository'
+import type { Event } from './Event'
+import type { EventFilter, EventRepository } from './EventRepository'
 
 export class InMemoryEventRepository implements EventRepository {
   private events: Event[] = []
