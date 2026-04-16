@@ -1,4 +1,5 @@
-import type { Request, Response } from "express";
+// ensure eventId is always a string regardless of route param type
+// import type { Request, Response } from "express";
 import { postComment, getComments, removeComment } from "./comments.service.js";
 import { getAuthenticatedUser } from "../../session/AppSession.js";
 
