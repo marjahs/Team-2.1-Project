@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { IEventController } from "./events/EventController";
-import type { RsvpController } from "./features/Rsvp/RsvpController";
+import type { RsvpController } from "./features/rsvp/RsvpController";
 import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
