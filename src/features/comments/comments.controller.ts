@@ -14,3 +14,27 @@ export async function handlePostComment(req: Request, res: Response) {
   }
   return res.status(201).send(result.value);
 }
+export async function handleGetComments(req: Request, res: Response) {
+  const { eventId } = req.params;
+  const user = getAuthenticatedUser(req.session as any);
+  if (!user) return res.status(401).send("Not authenticated");
+
+  const result = getComments(eventId);
+  return res.status(200).send(result.value);
+}
+
+export async function handleDeleteComment(req: Request, res: Response) {
+  const { commentId } = req.params;
+  const user = getAuthenticatedUser(req.session as any);
+  if (!user) return res.status(401).send("Not authenticated");
+
+  const organizerId = req.body.organizerId as string;
+  const result = removeComment(commentId, user.userId, user.role, organizerId);
+  if (result.ok === false) {
+    if (result.error.name === "CommentNotFoundError") {
+      return res.status(404).send(result.error.message);
+    }
+    return res.status(403).send(result.error.message);
+  }
+  return res.status(200).send(result.value);
+}
