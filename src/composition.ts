@@ -12,7 +12,7 @@ import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
-import { RsvpController } from "./features/Rsvp/RsvpController";
+import { RsvpController } from "./features/rsvp/RsvpController";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
