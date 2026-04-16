@@ -1,10 +1,11 @@
+// ensure eventId is always a string regardless of route param type
 // Save controller: handles toggle save and get saved events requests
 import type { Request, Response } from "express";
 import { toggleSave, getSavedEvents } from "./save.service.js";
 import { getAuthenticatedUser } from "../../session/AppSession.js";
 
 export async function handleToggleSave(req: Request, res: Response) {
-  const { eventId } = req.params;
+  const eventId = typeof req.params.eventId === 'string' ? req.params.eventId : req.params.eventId[0];
   const user = getAuthenticatedUser(req.session as any);
   if (!user) return res.status(401).send("Not authenticated");
   if (!eventId) return res.status(400).send("Event ID is required");
