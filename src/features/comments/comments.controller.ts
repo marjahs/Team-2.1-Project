@@ -33,6 +33,7 @@ export async function handleGetComments(req: Request, res: Response) {
     eventId,
     currentUserId: user.userId,
     userRole: user.role,
+    layout: false,
   });
 }
 export async function handleDeleteComment(req: Request, res: Response) {
