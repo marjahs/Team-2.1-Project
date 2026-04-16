@@ -26,5 +26,6 @@ export async function handleGetSavedEvents(req: Request, res: Response) {
   }
   return res.render("partials/save", {
     savedEvents: result.value,
+    layout: false,
   });
 }
