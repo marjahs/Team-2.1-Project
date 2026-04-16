@@ -1,0 +1,42 @@
+<%- include("../layouts/base") %>
+
+<h1>Create Event</h1>
+
+<form action="/events" method="POST">
+  <div>
+    <label>Title</label>
+    <input type="text" name="title" required />
+  </div>
+
+  <div>
+    <label>Description</label>
+    <input type="text" name="description" required />
+  </div>
+
+  <div>
+    <label>Location</label>
+    <input type="text" name="location" required />
+  </div>
+
+  <div>
+    <label>Category</label>
+    <input type="text" name="category" required />
+  </div>
+
+  <div>
+    <label>Capacity (optional)</label>
+    <input type="number" name="capacity" />
+  </div>
+
+  <div>
+    <label>Start Date</label>
+    <input type="datetime-local" name="startDatetime" required />
+  </div>
+
+  <div>
+    <label>End Date</label>
+    <input type="datetime-local" name="endDatetime" required />
+  </div>
+
+  <button type="submit">Create Event</button>
+</form>
