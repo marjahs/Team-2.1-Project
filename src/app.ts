@@ -118,6 +118,7 @@ class ExpressApp implements IApp {
   }
 
   private registerRoutes(): void {
+    this.logger.info("Registering feature routes");
     this.app.get("/", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
@@ -193,9 +194,9 @@ class ExpressApp implements IApp {
         await this.eventController.filterEvents(req, res);
       }),
     );
-// ── Feature routes ───────────────────────────────────────────────
-this.app.use(commentsRouter);
-this.app.use(saveRouter);
+    // ── Feature routes ───────────────────────────────────────────────
+  this.app.use(commentsRouter);
+  this.app.use(saveRouter);
     // ── Error handler ────────────────────────────────────────────────
      
 
