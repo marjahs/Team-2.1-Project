@@ -3,7 +3,7 @@ import { postComment, getComments, removeComment } from "./comments.service.js";
 import { getAuthenticatedUser } from "../../session/AppSession.js";
 
 export async function handlePostComment(req: Request, res: Response) {
-  const { eventId } = req.params;
+  const eventId = typeof req.params.eventId === 'string' ? req.params.eventId : req.params.eventId[0];
   const { text } = req.body;
   const user = getAuthenticatedUser(req.session as any);
   if (!user) return res.status(401).send("Not authenticated");
@@ -15,7 +15,7 @@ export async function handlePostComment(req: Request, res: Response) {
   return res.status(201).send(result.value);
 }
 export async function handleGetComments(req: Request, res: Response) {
-  const { eventId } = req.params;
+  const eventId = typeof req.params.eventId === 'string' ? req.params.eventId : req.params.eventId[0];
   const user = getAuthenticatedUser(req.session as any);
   if (!user) return res.status(401).send("Not authenticated");
   if (!eventId) return res.status(400).send("Event ID is required");
