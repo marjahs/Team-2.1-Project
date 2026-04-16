@@ -28,9 +28,13 @@ export async function handleGetComments(req: Request, res: Response) {
   if (result.ok === false) {
     return res.status(400).send("Unable to load comments");
   }
-  return res.status(200).send(result.value);
+  return res.render("partials/comments", {
+    comments: result.value,
+    eventId,
+    currentUserId: user.userId,
+    userRole: user.role,
+  });
 }
-
 export async function handleDeleteComment(req: Request, res: Response) {
   const commentId =
     typeof req.params.commentId === "string" ? req.params.commentId : "";
