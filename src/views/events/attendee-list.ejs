@@ -1,0 +1,28 @@
+cat > src/views/events/attendee-list.ejs << 'EOF'
+<h1>Attendee List</h1>
+
+<% if (attendees.length === 0) { %>
+  <p>No attendees have RSVP'd to this event yet.</p>
+<% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>RSVP'd At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% attendees.forEach(function(attendee) { %>
+        <tr>
+          <td><%= attendee.displayName %></td>
+          <td><%= attendee.status %></td>
+          <td><%= new Date(attendee.createdAt).toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>
+
+<a href="/events/<%= eventId %>">← Back to Event</a>
+EOF
