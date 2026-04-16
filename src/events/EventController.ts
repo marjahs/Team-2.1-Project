@@ -6,6 +6,7 @@ import { EventService, InvalidDateRangeError } from "./EventService";
 export interface IEventController {
   filterEvents(req: Request, res: Response): Promise<void>;
   searchEvents(req: Request, res: Response): Promise<void>;
+  showEventDetail(req: Request, res: Response): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -45,25 +46,31 @@ class EventController implements IEventController {
     res.status(200).json(result.value);
   }
   async searchEvents(req: Request, res: Response): Promise<void> {
-  const { q } = req.query
-
-  const result = await this.eventService.searchPublishedEvents({
-    query: typeof q === "string" ? q : undefined,
-  })
-
-  const browserSession = recordPageView(req.session as any)
-
-  res.status(200).render("events/search", {
-    query: typeof q === "string" ? q : "",
-    events: result.value,
-    pageError: null,
-    session: browserSession,
-  })
-}
-}
-
-export function CreateEventController(
-  eventService: EventService,
-): IEventController {
-  return new EventController(eventService);
-}
+    const { q } = req.query
+  
+    const result = await this.eventService.searchPublishedEvents({
+      query: typeof q === "string" ? q : undefined,
+    })
+  
+    const browserSession = recordPageView(req.session as any)
+  
+    res.status(200).render("events/search", {
+      query: typeof q === "string" ? q : "",
+      events: result.value,
+      pageError: null,
+      session: browserSession,
+    })
+  }
+  
+  // ✅ ADD METHOD #2 RIGHT HERE (still inside the class)
+  async showEventDetail(req: Request, res: Response): Promise<void> {
+    // implementation goes here
+  }
+  
+  } // <-- keep this class closing brace AFTER your new method
+  
+  export function CreateEventController(
+    eventService: EventService,
+  ): IEventController {
+    return new EventController(eventService);
+  }

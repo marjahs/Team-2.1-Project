@@ -135,6 +135,8 @@ class ExpressApp implements IApp {
       }),
     );
 
+    
+    
     this.app.get("/login", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       const browserSession = recordPageView(store);
@@ -205,6 +207,15 @@ class ExpressApp implements IApp {
         await this.eventController.filterEvents(req, res);
       }),
     );
+
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.eventController.showEventDetail(req, res);
+      }),
+    );
+
 
     this.app.get(
       "/events/search",
