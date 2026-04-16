@@ -19,6 +19,13 @@ export class InvalidDateRangeError extends Error {
   }
 }
 
+export class EventNotFoundError extends Error {
+  constructor() {
+    super("Event not found.");
+    this.name = "EventNotFoundError";
+  }
+}
+
 export class EventService {
   constructor(private readonly eventRepository: EventRepository) {}
 
@@ -48,5 +55,11 @@ export class EventService {
     const query = input.query?.trim() ?? ""
     const events = await this.eventRepository.searchPublished(query)
     return Ok(events)
+  }
+
+  async getEventById(eventId: string): Promise<Result<Event, EventNotFoundError>> {
+    const event = await this.eventRepository.findById(eventId)
+    if (!event) return Err(new EventNotFoundError())
+    return Ok(event)
   }
 }
