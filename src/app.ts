@@ -161,7 +161,7 @@ class ExpressApp implements IApp {
       const user = getAuthenticatedUser(sessionStore(req));
       if (!user) return;
 
-      const result = EventService.createEvent(
+      const result = await EventService.createEvent(
         {
           title: req.body.title,
           description: req.body.description,
