@@ -18,11 +18,11 @@ export async function handleGetComments(req: Request, res: Response) {
   const { eventId } = req.params;
   const user = getAuthenticatedUser(req.session as any);
   if (!user) return res.status(401).send("Not authenticated");
+  if (!eventId) return res.status(400).send("Event ID is required");
 
   const result = getComments(eventId);
   return res.status(200).send(result.value);
 }
-
 export async function handleDeleteComment(req: Request, res: Response) {
   const { commentId } = req.params;
   const user = getAuthenticatedUser(req.session as any);
