@@ -14,7 +14,7 @@ export async function handlePostComment(req: Request, res: Response) {
   if (result.ok === false) {
     return res.status(400).send(result.value.message);
   }
-  return res.status(201).send(result.value);
+  return res.redirect(`/events/${eventId}/comments`);
 }
 
 export async function handleGetComments(req: Request, res: Response) {
