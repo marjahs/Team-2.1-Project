@@ -19,6 +19,8 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import commentsRouter from "./features/comments/comments.router.js";
+import saveRouter from "./features/save/save.router.js";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -116,6 +118,7 @@ class ExpressApp implements IApp {
   }
 
   private registerRoutes(): void {
+    this.logger.info("Registering feature routes");
     this.app.get("/", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
@@ -191,7 +194,9 @@ class ExpressApp implements IApp {
         await this.eventController.filterEvents(req, res);
       }),
     );
-
+    // ── Feature routes ───────────────────────────────────────────────
+  this.app.use(commentsRouter);
+  this.app.use(saveRouter);
     // ── Error handler ────────────────────────────────────────────────
      
 
