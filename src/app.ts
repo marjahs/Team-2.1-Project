@@ -193,7 +193,9 @@ class ExpressApp implements IApp {
         await this.eventController.filterEvents(req, res);
       }),
     );
-
+// ── Feature routes ───────────────────────────────────────────────
+this.app.use(commentsRouter);
+this.app.use(saveRouter);
     // ── Error handler ────────────────────────────────────────────────
      
 
