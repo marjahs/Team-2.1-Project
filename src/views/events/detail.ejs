@@ -1,0 +1,32 @@
+<h1><%= event.title %></h1>
+<p><%= event.description %></p>
+<p>Location: <%= event.location %></p>
+<p>Category: <%= event.category %></p>
+<p>Status: <strong><%= event.status %></strong></p>
+<p>Start: <%= new Date(event.startDatetime).toLocaleString() %></p>
+<p>End: <%= new Date(event.endDatetime).toLocaleString() %></p>
+
+<% const user = locals.session?.authenticatedUser %>
+<% if (user && user.userId === event.organizerId) { %>
+
+  <% if (event.status === 'draft') { %>
+    <form method="POST" action="/events/<%= event.id %>/publish">
+      <button type="submit">Publish Event</button>
+    </form>
+  <% } %>
+
+  <% if (event.status === 'draft' || event.status === 'published') { %>
+    <form method="POST" action="/events/<%= event.id %>/cancel">
+      <button type="submit">Cancel Event</button>
+    </form>
+  <% } %>
+
+  <% if (event.status === 'cancelled' || event.status === 'past') { %>
+    <p>No further actions available for this event.</p>
+  <% } %>
+
+  <a href="/events/<%= event.id %>/attendees">View Attendee List</a>
+
+<% } %>
+
+<a href="/home">← Back to Home</a>
