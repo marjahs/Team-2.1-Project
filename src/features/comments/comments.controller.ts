@@ -24,19 +24,20 @@ export async function handleGetComments(req: Request, res: Response) {
   const eventId =
     typeof req.params.eventId === "string" ? req.params.eventId : "";
   const user = getAuthenticatedUser(req.session as any);
-
   if (!user) return res.status(401).send("Not authenticated");
   if (!eventId) return res.status(400).send("Event ID is required");
 
   const result = getComments(eventId);
-
   if (result.ok === false) {
     return res.status(400).send("Unable to load comments");
   }
-
-  return res.status(200).send(result.value);
+  return res.render("partials/comments", {
+    comments: result.value,
+    eventId,
+    currentUserId: user.userId,
+    userRole: user.role,
+  });
 }
-
 export async function handleDeleteComment(req: Request, res: Response) {
   const commentId =
     typeof req.params.commentId === "string" ? req.params.commentId : "";
