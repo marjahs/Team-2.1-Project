@@ -1,3 +1,4 @@
+// ensure eventId is always a string regardless of route param type
 // Save controller: handles toggle save and get saved events requests
 import type { Request, Response } from "express";
 import { toggleSave, getSavedEvents } from "./save.service.js";
