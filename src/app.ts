@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { IEventController } from "./events/EventController";
+import type { RsvpController } from "./features/Rsvp/RsvpController";
 import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
@@ -40,12 +41,14 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly eventController: IEventController,
+    private readonly rsvpController: RsvpController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
     this.registerMiddleware();
     this.registerTemplating();
     this.registerRoutes();
+    
   }
 
   private registerMiddleware(): void {
@@ -123,6 +126,14 @@ class ExpressApp implements IApp {
       const store = sessionStore(req);
       res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
     }));
+
+    this.app.post(
+      "/events/:eventId/rsvp/toggle",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
+      }),
+    );
 
     this.app.get("/login", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
@@ -224,7 +235,8 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   eventController: IEventController,
+  rsvpController: RsvpController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, eventController, logger);
+  return new ExpressApp(authController, eventController, rsvpController, logger);
 }
