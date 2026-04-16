@@ -3,6 +3,7 @@ import { EventService, InvalidDateRangeError } from "./EventService";
 
 export interface IEventController {
   filterEvents(req: Request, res: Response): Promise<void>;
+  searchEvents(req: Request, res: Response): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -40,6 +41,19 @@ class EventController implements IEventController {
     }
 
     res.status(200).json(result.value);
+  }
+  async searchEvents(req: Request, res: Response): Promise<void> {
+    const { q } = req.query
+
+    const result = await this.eventService.searchPublishedEvents({
+      query: typeof q === "string" ? q : undefined,
+    })
+
+    res.status(200).render("events/search", {
+      query: typeof q === "string" ? q : "",
+      events: result.value,
+      pageError: null,
+    })
   }
 }
 

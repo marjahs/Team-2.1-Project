@@ -27,6 +27,24 @@ export class InMemoryEventRepository implements EventRepository {
     })
   }
 
+  async searchPublished(query: string): Promise<Event[]> {
+    const q = query.toLowerCase().trim()
+    const now = new Date()
+
+    return this.events.filter((event) => {
+      if (event.status !== "published") return false
+      if (event.startDatetime < now) return false
+      if (!q) return true
+
+      return (
+        event.title.toLowerCase().includes(q) ||
+        event.description.toLowerCase().includes(q) ||
+        event.category.toLowerCase().includes(q) ||
+        event.location.toLowerCase().includes(q)
+      )
+    })
+  }
+
   async findById(id: string): Promise<Event | null> {
     return this.events.find((event) => event.id === id) ?? null
   }

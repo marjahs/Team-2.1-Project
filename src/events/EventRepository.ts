@@ -11,7 +11,8 @@ export interface EventRepository {
   getPublished(): Promise<Event[]>
   save(event: Event): Promise<Event>
   findPublishedByFilter(filter: EventFilter): Promise<Event[]>
-
+  
+  searchPublished(query: string): Promise<Event[]>
   findById(id: string): Promise<Event | null>
   update(id: string, fields: Partial<Omit<Event, 'id' | 'createdAt'>>): Promise<Event | null>
 }
