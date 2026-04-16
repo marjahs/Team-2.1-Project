@@ -1,0 +1,32 @@
+<h1>Event Search</h1>
+
+<form action="/events/search" method="GET" style="margin-bottom: 2rem;">
+  <input
+    type="text"
+    name="q"
+    value="<%= query %>"
+    placeholder="Search title, location, or category..."
+    style="padding: 8px; width: 300px;"
+  >
+  <button type="submit" style="padding: 8px 16px;">Search</button>
+</form>
+
+<hr>
+
+<% if (events.length === 0) { %>
+  <p>No published upcoming events found.</p>
+<% } else { %>
+  <div style="display: grid; gap: 1rem;">
+    <% events.forEach(event => { %>
+      <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
+        <h3><%= event.title %></h3>
+        <p>
+          <strong>Category:</strong> <%= event.category %> |
+          <strong>Location:</strong> <%= event.location %>
+        </p>
+        <p><%= event.description %></p>
+        <small>Starts: <%= new Date(event.startDatetime).toLocaleString() %></small>
+      </div>
+    <% }) %>
+  </div>
+<% } %>

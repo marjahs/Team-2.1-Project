@@ -194,9 +194,17 @@ class ExpressApp implements IApp {
         await this.eventController.filterEvents(req, res);
       }),
     );
+
+    this.app.get(
+      "/events/search",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.eventController.searchEvents(req, res);
+      }),
+    );
     // ── Feature routes ───────────────────────────────────────────────
-  this.app.use(commentsRouter);
-  this.app.use(saveRouter);
+    this.app.use(commentsRouter);
+    this.app.use(saveRouter);
     // ── Error handler ────────────────────────────────────────────────
      
 
