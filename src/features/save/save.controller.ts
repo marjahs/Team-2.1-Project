@@ -23,7 +23,9 @@ export async function handleGetSavedEvents(req: Request, res: Response) {
 
   const result = getSavedEvents(user.userId, user.role);
   if (result.ok === false) {
-    return res.status(403).send(result.error.message);
+    return res.status(403).send(result.value.message);
   }
-  return res.status(200).send(result.value);
+  return res.render("partials/save", {
+    savedEvents: result.value,
+  });
 }
