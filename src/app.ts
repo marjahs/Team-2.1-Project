@@ -19,6 +19,8 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import commentsRouter from "./features/comments/comments.router.js";
+import saveRouter from "./features/save/save.router.js";
 
 type AsyncRequestHandler = RequestHandler;
 
