@@ -1,0 +1,33 @@
+<section class="saved-events-section">
+  <h2>Saved Events</h2>
+
+  <!-- Save/Unsave button for event detail page -->
+  <% if (typeof eventId !== 'undefined') { %>
+    <form action="/events/<%= eventId %>/save" method="POST">
+      <button type="submit">
+        <% if (isSaved) { %>
+          Unsave Event
+        <% } else { %>
+          Save for Later
+        <% } %>
+      </button>
+    </form>
+  <% } %>
+
+  <!-- Saved events list page -->
+  <% if (typeof savedEvents !== 'undefined') { %>
+    <% if (savedEvents.length === 0) { %>
+      <p>You have no saved events yet.</p>
+    <% } else { %>
+      <% savedEvents.forEach(function(saved) { %>
+        <div class="saved-event">
+          <p><strong>Event ID:</strong> <%= saved.eventId %></p>
+          <p><small>Saved on: <%= saved.createdAt %></small></p>
+          <form action="/events/<%= saved.eventId %>/save" method="POST">
+            <button type="submit">Unsave</button>
+          </form>
+        </div>
+      <% }) %>
+    <% } %>
+  <% } %>
+</section>
