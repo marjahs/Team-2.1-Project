@@ -8,15 +8,12 @@ export async function handlePostComment(req: Request, res: Response) {
   const text =
     typeof (req.body as any).text === "string" ? (req.body as any).text : "";
   const user = getAuthenticatedUser(req.session as any);
-
   if (!user) return res.status(401).send("Not authenticated");
 
   const result = postComment(eventId, user.userId, text);
-
   if (result.ok === false) {
-    return res.status(400).send(result.error.message);
+    return res.status(400).send(result.value.message);
   }
-
   return res.status(201).send(result.value);
 }
 
@@ -42,7 +39,6 @@ export async function handleDeleteComment(req: Request, res: Response) {
   const commentId =
     typeof req.params.commentId === "string" ? req.params.commentId : "";
   const user = getAuthenticatedUser(req.session as any);
-
   if (!user) return res.status(401).send("Not authenticated");
 
   const organizerId =
@@ -51,13 +47,11 @@ export async function handleDeleteComment(req: Request, res: Response) {
       : "";
 
   const result = removeComment(commentId, user.userId, user.role, organizerId);
-
   if (result.ok === false) {
-    if (result.error.name === "CommentNotFoundError") {
-      return res.status(404).send(result.error.message);
+    if (result.value.name === "CommentNotFoundError") {
+      return res.status(404).send(result.value.message);
     }
-    return res.status(403).send(result.error.message);
+    return res.status(403).send(result.value.message);
   }
-
   return res.status(200).send(result.value);
 }
