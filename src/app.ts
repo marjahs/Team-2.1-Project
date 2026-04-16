@@ -4,6 +4,7 @@ import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { EventService } from "./service/eventService";
+import { EventController } from "./controllers/eventController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -147,38 +148,15 @@ class ExpressApp implements IApp {
 
     this.app.get("/events/new", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
-      res.render("events/create");
+      return EventController.showCreateForm(req, res);
     }));
 
     this.app.post("/events", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
-
-      const user = getAuthenticatedUser(sessionStore(req));
-      if (!user) return;
-
-      const result = EventService.createEvent(
-        {
-          title: req.body.title,
-          description: req.body.description,
-          location: req.body.location,
-          category: req.body.category,
-          capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
-          startDatetime: new Date(req.body.startDatetime),
-          endDatetime: new Date(req.body.endDatetime),
-        },
-        user.userId
-      );
-
-      // ✅ FIXED LINE HERE
-      if (result.ok === false) {
-        return res.status(400).render("partials/error", {
-          message: result.error.message,
-          layout: false,
-        });
-      }
-
-      return res.redirect(`/events/${result.value.id}`);
+      return EventController.createEvent(req, res);
     }));
+
+     
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
       res.status(500).render("partials/error", {
@@ -186,6 +164,7 @@ class ExpressApp implements IApp {
         layout: false,
       });
     });
+    
   }
 
   getExpressApp(): express.Express {
