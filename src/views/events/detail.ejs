@@ -1,0 +1,6 @@
+<h1><%= event.title %></h1>
+<p><%= event.description %></p>
+
+<form method="POST" action="/events/<%= event.id %>/rsvp/toggle">
+  <button type="submit">Toggle RSVP</button>
+</form>

@@ -1,10 +1,11 @@
-import path from "path";
+import path from "node:path";
+import type { IEventController } from "./events/EventController";
+import type { RsvpController } from "./features/rsvp/RsvpController";
 import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { EventService } from "./service/eventService";
-import { EventController } from "./controllers/eventController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -19,6 +20,8 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import commentsRouter from "./features/comments/comments.router.js";
+import saveRouter from "./features/save/save.router.js";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -37,12 +40,15 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly eventController: IEventController,
+    private readonly rsvpController: RsvpController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
     this.registerMiddleware();
     this.registerTemplating();
     this.registerRoutes();
+    
   }
 
   private registerMiddleware(): void {
@@ -115,11 +121,22 @@ class ExpressApp implements IApp {
   }
 
   private registerRoutes(): void {
+    this.logger.info("Registering feature routes");
     this.app.get("/", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
     }));
 
+    this.app.post(
+      "/events/:eventId/rsvp/toggle",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
+      }),
+    );
+
+    
+    
     this.app.get("/login", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       const browserSession = recordPageView(store);
@@ -148,14 +165,69 @@ class ExpressApp implements IApp {
 
     this.app.get("/events/new", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
-      return EventController.showCreateForm(req, res);
+      res.render("events/create");
     }));
 
     this.app.post("/events", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
-      return EventController.createEvent(req, res);
+
+      const user = getAuthenticatedUser(sessionStore(req));
+      if (!user) return;
+
+      const result = await EventService.createEvent(
+        {
+          title: req.body.title,
+          description: req.body.description,
+          location: req.body.location,
+          category: req.body.category,
+          capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+          startDatetime: new Date(req.body.startDatetime),
+          endDatetime: new Date(req.body.endDatetime),
+        },
+        user.userId
+      );
+
+      // ✅ FIXED LINE HERE
+      if (result.ok === false) {
+        return res.status(400).render("partials/error", {
+          message: result.value.message,
+          layout: false,
+        });
+      }
+      return res.redirect(`/events/${result.value.id}`);
     }));
 
+    this.app.get(
+      "/events/filter",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        await this.eventController.filterEvents(req, res);
+      }),
+    );
+
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.eventController.showEventDetail(req, res);
+      }),
+    );
+
+
+    this.app.get(
+      "/events/search",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.eventController.searchEvents(req, res);
+      }),
+    );
+    // ── Feature routes ───────────────────────────────────────────────
+    this.app.use(commentsRouter);
+    this.app.use(saveRouter);
+    // ── Error handler ────────────────────────────────────────────────
      
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
@@ -164,7 +236,6 @@ class ExpressApp implements IApp {
         layout: false,
       });
     });
-    
   }
 
   getExpressApp(): express.Express {
@@ -174,7 +245,9 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  eventController: IEventController,
+  rsvpController: RsvpController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, eventController, rsvpController, logger);
 }

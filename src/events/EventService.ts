@@ -8,10 +8,21 @@ export type FilterEventsInput = {
   endDatetime?: Date
 }
 
+export type SearchEventsInput = {
+  query?: string
+}
+
 export class InvalidDateRangeError extends Error {
   constructor() {
     super('Start date must be before or equal to end date.')
     this.name = 'InvalidDateRangeError'
+  }
+}
+
+export class EventNotFoundError extends Error {
+  constructor() {
+    super("Event not found.");
+    this.name = "EventNotFoundError";
   }
 }
 
@@ -28,6 +39,7 @@ export class EventService {
     ) {
       return Err(new InvalidDateRangeError())
     }
+  
 
     const events = await this.eventRepository.findPublishedByFilter({
       category: input.category,
@@ -36,5 +48,18 @@ export class EventService {
     })
 
     return Ok(events)
+  }
+  async searchPublishedEvents(
+    input: SearchEventsInput
+  ): Promise<Result<Event[], never>> {
+    const query = input.query?.trim() ?? ""
+    const events = await this.eventRepository.searchPublished(query)
+    return Ok(events)
+  }
+
+  async getEventById(eventId: string): Promise<Result<Event, EventNotFoundError>> {
+    const event = await this.eventRepository.findById(eventId)
+    if (!event) return Err(new EventNotFoundError())
+    return Ok(event)
   }
 }

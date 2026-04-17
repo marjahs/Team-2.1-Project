@@ -5,8 +5,8 @@ import {
   getCommentsByEvent,
   type Comment,
 } from "./comments.repo.js";
+import { type Result, Ok, Err } from "../../lib/result.js";
 
-// Error types
 export class InvalidInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -28,36 +28,28 @@ export class UnauthorizedError extends Error {
   }
 }
 
-// Result type
-type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
-
-// Post a comment
 export function postComment(
   eventId: string,
   userId: string,
   text: string
 ): Result<Comment, InvalidInputError> {
   if (!text || text.trim() === "") {
-    return { ok: false, error: new InvalidInputError("Comment cannot be empty") };
+    return Err(new InvalidInputError("Comment cannot be empty"));
   }
-
   if (text.length > 500) {
-    return { ok: false, error: new InvalidInputError("Comment cannot exceed 500 characters") };
+    return Err(new InvalidInputError("Comment cannot exceed 500 characters"));
   }
-
   const comment = createComment(eventId, userId, text.trim());
-  return { ok: true, value: comment };
+  return Ok(comment);
 }
 
-// Get all comments for an event
 export function getComments(
   eventId: string
 ): Result<Comment[], never> {
   const result = getCommentsByEvent(eventId);
-  return { ok: true, value: result };
+  return Ok(result);
 }
 
-// Delete a comment
 export function removeComment(
   commentId: string,
   userId: string,
@@ -65,19 +57,15 @@ export function removeComment(
   organizerId: string
 ): Result<{ id: string; deleted: boolean }, CommentNotFoundError | UnauthorizedError> {
   const comment = getCommentById(commentId);
-
   if (!comment) {
-    return { ok: false, error: new CommentNotFoundError() };
+    return Err(new CommentNotFoundError());
   }
-
   const isAuthor = comment.userId === userId;
   const isOrganizer = userId === organizerId;
   const isAdmin = userRole === "admin";
-
   if (!isAuthor && !isOrganizer && !isAdmin) {
-    return { ok: false, error: new UnauthorizedError() };
+    return Err(new UnauthorizedError());
   }
-
   deleteComment(commentId);
-  return { ok: true, value: { id: commentId, deleted: true } };
+  return Ok({ id: commentId, deleted: true });
 }
