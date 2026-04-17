@@ -1,6 +1,7 @@
 import { recordPageView } from "../session/AppSession"
 import type { Request, Response } from "express";
 import { EventService, InvalidDateRangeError } from "./EventService";
+import { getAuthenticatedUser } from "../session/AppSession";
 
 
 export interface IEventController {
@@ -62,8 +63,31 @@ class EventController implements IEventController {
     })
   }
   
-  // ✅ ADD METHOD #2 RIGHT HERE (still inside the class)
+  
   async showEventDetail(req: Request, res: Response): Promise<void> {
+    const id = Array.isArray(req.params.id)
+  ? req.params.id[0]
+  : req.params.id;
+
+    const user = getAuthenticatedUser(req.session as any);
+
+    const result = await this.eventService.getEventById(
+      id,
+      user?.userId
+    );
+
+    if (!result.ok) {
+      return res.status(404).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+    }
+
+    return res.render("events/detail", {
+      event: result.value,
+    });
+  
+    
     // implementation goes here
   }
   
