@@ -1,8 +1,7 @@
+import { getAuthenticatedUser } from "../session/AppSession";
 import { recordPageView } from "../session/AppSession"
 import type { Request, Response } from "express";
 import { EventService, InvalidDateRangeError } from "./EventService";
-import { getAuthenticatedUser } from "../session/AppSession";
-
 
 export interface IEventController {
   filterEvents(req: Request, res: Response): Promise<void>;
@@ -76,9 +75,9 @@ class EventController implements IEventController {
       user?.userId
     );
 
-    if (!result.ok) {
+    if (result.ok== false) {
       return res.status(404).render("partials/error", {
-        message: result.value.message,
+        message: (result.value as Error).message,
         layout: false,
       });
     }
