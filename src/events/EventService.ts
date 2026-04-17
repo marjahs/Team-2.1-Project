@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { Err, Ok, type Result } from '../lib/result'
 import type { Event } from './Event'
 import type { EventRepository } from './EventRepository'
