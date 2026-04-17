@@ -161,7 +161,6 @@ class ExpressApp implements IApp {
       res.render("home", { session: browserSession, pageError: null });
     }));
 
-    // ✅ EVENT CREATION ROUTES (FIXED)
 
     this.app.get("/events/new", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
@@ -187,7 +186,7 @@ class ExpressApp implements IApp {
         user.userId
       );
 
-      // ✅ FIXED LINE HERE
+      
       if (result.ok === false) {
         return res.status(400).render("partials/error", {
           message: result.value.message,
@@ -224,10 +223,10 @@ class ExpressApp implements IApp {
         await this.eventController.searchEvents(req, res);
       }),
     );
-    // ── Feature routes ───────────────────────────────────────────────
+    
     this.app.use(commentsRouter);
     this.app.use(saveRouter);
-    // ── Error handler ────────────────────────────────────────────────
+    
      
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {

@@ -93,7 +93,7 @@ export class EventService {
   
     
     const event: Event = {
-      id: crypto.randomUUID(), // works in Node 18+
+      id: crypto.randomUUID(), 
       title: data.title,
       description: data.description,
       location: data.location,

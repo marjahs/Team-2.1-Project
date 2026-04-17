@@ -86,11 +86,10 @@ class EventController implements IEventController {
       event: result.value,
     });
   
-    
-    // implementation goes here
+   
   }
   
-  } // <-- keep this class closing brace AFTER your new method
+  } 
   
   export function CreateEventController(
     eventService: EventService,
