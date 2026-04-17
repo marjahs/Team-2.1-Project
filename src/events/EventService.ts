@@ -62,4 +62,46 @@ export class EventService {
     if (!event) return Err(new EventNotFoundError())
     return Ok(event)
   }
+  async createEvent(
+    data: {
+      title: string
+      description: string
+      location: string
+      category: string
+      capacity?: number
+      startDatetime: Date
+      endDatetime: Date
+    },
+    organizerId: string
+  ): Promise<Result<Event, Error>> {
+    
+    // ✅ validation
+    if (!data.title || !data.startDatetime || !data.endDatetime) {
+      return Err(new Error("Missing required fields"))
+    }
+  
+    if (data.endDatetime <= data.startDatetime) {
+      return Err(new Error("End time must be after start time"))
+    }
+  
+    
+    const event: Event = {
+      id: crypto.randomUUID(), // works in Node 18+
+      title: data.title,
+      description: data.description,
+      location: data.location,
+      category: data.category,
+      status: "draft",
+      capacity: data.capacity,
+      startDatetime: data.startDatetime,
+      endDatetime: data.endDatetime,
+      organizerId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  
+    const created = await this.eventRepository.save(event)
+  
+    return Ok(created)
+  }
 }
