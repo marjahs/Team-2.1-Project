@@ -24,6 +24,7 @@ import commentsRouter from "./features/comments/comments.router.js";
 import saveRouter from "./features/save/save.router.js";
 import { publishEvent, cancelEvent } from './service/eventPublishingService'
 import { getAttendeesForEvent } from './service/attendeeService'
+import { inMemoryEventRepository } from './events/InMemoryEventRepository'
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -137,10 +138,12 @@ class ExpressApp implements IApp {
     this.app.get("/login", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       const browserSession = recordPageView(store);
+
       if (getAuthenticatedUser(store)) {
         res.redirect("/home");
         return;
       }
+
       await this.authController.showLogin(res, browserSession);
     }));
 
@@ -163,8 +166,10 @@ class ExpressApp implements IApp {
 
     this.app.post("/events", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
+
       const user = getAuthenticatedUser(sessionStore(req));
       if (!user) return;
+
       const result = await EventService.createEvent(
         {
           title: req.body.title,
@@ -177,9 +182,10 @@ class ExpressApp implements IApp {
         },
         user.userId
       );
+
       if (result.ok === false) {
         return res.status(400).render("partials/error", {
-          message: result.value.message,
+          message: ( result.value as { name: string; message: string }).message,
           layout: false,
         });
       }
@@ -212,11 +218,12 @@ class ExpressApp implements IApp {
         : req.params.eventId[0];
       const result = await publishEvent(eventId, user.userId);
       if (!result.ok) {
+        const error = result.value as { name: string; message: string };
         const status =
-          result.value.name === 'EventNotFoundError'  ? 404 :
-          result.value.name === 'UnauthorizedError'   ? 403 : 400;
+          error.name === 'EventNotFoundError'  ? 404 :
+          error.name === 'UnauthorizedError'   ? 403 : 400;
         res.status(status).render('partials/error', {
-          message: result.value.message,
+          message: error.message,
           layout: false,
         });
         return;
@@ -234,11 +241,12 @@ class ExpressApp implements IApp {
         : req.params.eventId[0];
       const result = await cancelEvent(eventId, user.userId);
       if (!result.ok) {
+        const error = result.value as { name: string; message: string };
         const status =
-          result.value.name === 'EventNotFoundError'  ? 404 :
-          result.value.name === 'UnauthorizedError'   ? 403 : 400;
+          error.name === 'EventNotFoundError'  ? 404 :
+          error.name === 'UnauthorizedError'   ? 403 : 400;
         res.status(status).render('partials/error', {
-          message: result.value.message,
+          message: error.message,
           layout: false,
         });
         return;
@@ -256,11 +264,12 @@ class ExpressApp implements IApp {
         : req.params.eventId[0];
       const result = await getAttendeesForEvent(eventId, user.userId, user.role);
       if (!result.ok) {
+        const error = result.value as { name: string; message: string };
         const status =
-          result.value.name === 'AttendeeEventNotFoundError' ? 404 :
-          result.value.name === 'AttendeeUnauthorizedError'  ? 403 : 400;
+          error.name === 'AttendeeEventNotFoundError' ? 404 :
+          error.name === 'AttendeeUnauthorizedError'  ? 403 : 400;
         res.status(status).render('partials/error', {
-          message: result.value.message,
+          message: error.message,
           layout: false,
         });
         return;
@@ -271,7 +280,7 @@ class ExpressApp implements IApp {
       });
     }));
 
-    // ── Feature routes ───────────────────────────────────────────────
+    // ── Feature routers ──────────────────────────────────────────────
     this.app.use(commentsRouter);
     this.app.use(saveRouter);
 
