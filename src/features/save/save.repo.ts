@@ -35,5 +35,6 @@ export function deleteSaved(id: string): boolean {
   const index = savedEvents.findIndex((s) => s.id === id);
   if (index === -1) return false;
   savedEvents.splice(index, 1);
-  return true;
-}
+  return true;}
+
+  
