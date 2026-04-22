@@ -1,0 +1,17 @@
+<li id="comment-<%= comment.id %>" class="flex flex-col gap-1 p-3 border border-slate-200 rounded-xl bg-slate-50">
+  <div class="flex items-center justify-between">
+    <span class="font-semibold text-sm text-slate-800"><%= comment.userId %></span>
+    <span class="text-xs text-slate-400"><%= new Date(comment.createdAt).toLocaleString() %></span>
+  </div>
+  <p class="text-sm text-slate-700 mb-0"><%= comment.text %></p>
+  <% if (currentUserId === comment.userId || userRole === 'admin') { %>
+    <button
+      hx-delete="/comments/<%= comment.id %>"
+      hx-target="#comment-<%= comment.id %>"
+      hx-swap="outerHTML"
+      hx-confirm="Delete this comment?"
+      class="self-end text-xs text-red-500 hover:underline cursor-pointer bg-transparent border-0 p-0">
+      Delete
+    </button>
+  <% } %>
+</li>

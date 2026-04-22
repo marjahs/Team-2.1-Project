@@ -2,7 +2,12 @@
   <h2>Comments</h2>
 
   <!-- Post a comment form -->
-  <form action="/events/<%= eventId %>/comments" method="POST">
+  <div id="comment-error"></div>
+
+  <form hx-post="/events/<%= eventId %>/comments"
+        hx-target="#comment-list"
+        hx-swap="beforeend"
+        hx-on::after-request="if(event.detail.successful) this.reset()">
     <textarea
       name="text"
       placeholder="Write a comment..."
@@ -15,19 +20,10 @@
   <!-- Comments list -->
   <% if (comments.length === 0) { %>
     <p>No comments yet. Be the first to comment!</p>
-  <% } else { %>
-    <% comments.forEach(function(comment) { %>
-      <div class="comment">
-        <p><strong><%= comment.userId %></strong></p>
-        <p><%= comment.text %></p>
-        <p><small><%= comment.createdAt %></small></p>
-
-        <% if (currentUserId === comment.userId || userRole === 'admin' || userRole === 'organizer') { %>
-          <form action="/comments/<%= comment.id %>?_method=DELETE" method="POST">
-            <button type="submit">Delete</button>
-          </form>
-        <% } %>
-      </div>
-    <% }) %>
   <% } %>
+  <ul id="comment-list" class="flex flex-col gap-2">
+    <% comments.forEach(function(comment) { %>
+      <%- include('comment-item', { comment, currentUserId, userRole }) %>
+    <% }) %>
+  </ul>
 </section>
