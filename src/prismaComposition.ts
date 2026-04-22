@@ -6,7 +6,7 @@ import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
 import { CreateEventController } from "./events/EventController";
-import { InMemoryEventRepository } from "./events/InMemoryEventRepository";
+import { PrismaEventRepository } from "./events/PrismaEventRepository";
 import { EventService } from "./events/EventService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
@@ -14,9 +14,7 @@ import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { RsvpController } from "./features/rsvp/RsvpController";
 
-export const testEventRepository = new InMemoryEventRepository();
-
-export function createComposedApp(logger?: ILoggingService): IApp {
+export function createPrismaComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
   const authUsers = CreateInMemoryUserRepository();
@@ -29,7 +27,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger,
   );
 
-  const eventRepository = testEventRepository;
+  const eventRepository = new PrismaEventRepository();
   const eventService = new EventService(eventRepository);
   const eventController = CreateEventController(eventService);
 
