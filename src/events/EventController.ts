@@ -1,5 +1,5 @@
 import { getAuthenticatedUser } from "../session/AppSession";
-import { recordPageView } from "../session/AppSession"
+import { recordPageView } from "../session/AppSession";
 import type { Request, Response } from "express";
 import { EventService, InvalidDateRangeError } from "./EventService";
 
@@ -35,7 +35,6 @@ class EventController implements IEventController {
         });
         return;
       }
-
       res.status(500).render("partials/error", {
         message: "Unexpected server error.",
         layout: false,
@@ -43,56 +42,83 @@ class EventController implements IEventController {
       return;
     }
 
-    res.status(200).json(result.value);
+    const isHtmx = req.get("HX-Request") === "true";
+
+    if (isHtmx) {
+      res.status(200).render("partials/filter-results", {
+        events: result.value,
+        layout: false,
+      });
+      return;
+    }
+
+    // Full page — pass events directly,
+    //  let the view render the list inline
+    const browserSession = recordPageView(req.session as any);
+    res.status(200).render("events/filter", {
+      events: result.value,
+      category: typeof category === "string" ? category : "",
+      startDatetime: typeof startDatetime === "string" ? startDatetime : "",
+      endDatetime: typeof endDatetime === "string" ? endDatetime : "",
+      session: browserSession,
+    }, (err, html) => {
+      if (err) {
+        console.error("FILTER RENDER ERROR:", err.message);
+        res.status(500).send(err.message);
+      } else {
+        res.send(html);
+      }
+    });
   }
+
   async searchEvents(req: Request, res: Response): Promise<void> {
-    const { q } = req.query
-  
+    const { q } = req.query;
+
     const result = await this.eventService.searchPublishedEvents({
       query: typeof q === "string" ? q : undefined,
-    })
-  
-    const browserSession = recordPageView(req.session as any)
-  
+    });
+
+    const browserSession = recordPageView(req.session as any);
+    const isHtmx = req.get("HX-Request") === "true";
+
+    if (isHtmx) {
+      res.status(200).render("partials/search-results", {
+        events: result.value,
+        layout: false,
+      });
+      return;
+    }
+
+    // Full page — pass events directly
     res.status(200).render("events/search", {
       query: typeof q === "string" ? q : "",
       events: result.value,
       pageError: null,
       session: browserSession,
-    })
+    });
   }
-  
-  
+
   async showEventDetail(req: Request, res: Response): Promise<void> {
     const id = Array.isArray(req.params.id)
-  ? req.params.id[0]
-  : req.params.id;
+      ? req.params.id[0]
+      : req.params.id;
 
     const user = getAuthenticatedUser(req.session as any);
+    const result = await this.eventService.getEventById(id, user?.userId);
 
-    const result = await this.eventService.getEventById(
-      id,
-      user?.userId
-    );
-
-    if (result.ok== false) {
+    if (result.ok === false) {
       return res.status(404).render("partials/error", {
         message: (result.value as Error).message,
         layout: false,
       });
     }
 
-    return res.render("events/detail", {
-      event: result.value,
-    });
-  
-   
+    return res.render("events/detail", { event: result.value });
   }
-  
-  } 
-  
-  export function CreateEventController(
-    eventService: EventService,
-  ): IEventController {
-    return new EventController(eventService);
-  }
+}
+
+export function CreateEventController(
+  eventService: EventService,
+): IEventController {
+  return new EventController(eventService);
+}
