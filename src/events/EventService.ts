@@ -58,9 +58,16 @@ export class EventService {
     return Ok(events)
   }
 
-  async getEventById(eventId: string): Promise<Result<Event, EventNotFoundError>> {
+  async getEventById(eventId: string, userId?: string): Promise<Result<Event, Error>> {
     const event = await this.eventRepository.findById(eventId)
-    if (!event) return Err(new EventNotFoundError())
+    if (!event) {
+      return Err(new EventNotFoundError())
+    
+    }
+    if (event.status === "draft" && event.organizerId !== userId) {
+      return Err(new Error("Not authorized to view this event"))
+    }
+  
     return Ok(event)
   }
   async createEvent(
@@ -76,7 +83,7 @@ export class EventService {
     organizerId: string
   ): Promise<Result<Event, Error>> {
     
-    // ✅ validation
+    
     if (!data.title || !data.startDatetime || !data.endDatetime) {
       return Err(new Error("Missing required fields"))
     }
@@ -87,7 +94,7 @@ export class EventService {
   
     
     const event: Event = {
-      id: crypto.randomUUID(), // works in Node 18+
+      id: crypto.randomUUID(), 
       title: data.title,
       description: data.description,
       location: data.location,
