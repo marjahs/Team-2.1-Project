@@ -1,3 +1,4 @@
+import { inMemoryEventRepository } from "../../events/InMemoryEventRepository.js";
 import {
   createSaved,
   deleteSaved,
@@ -14,6 +15,12 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class InvalidSaveError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidSaveError";
+  }
+}
 export class InvalidInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -21,13 +28,18 @@ export class InvalidInputError extends Error {
   }
 }
 
-export function toggleSave(
+export async function toggleSave(
   eventId: string,
   userId: string,
   userRole: string
-): Result<{ id: string; eventId: string; userId: string; saved: boolean }, UnauthorizedError> {
+): Promise<Result<{ id: string; eventId: string; userId: string; saved: boolean }, UnauthorizedError | InvalidSaveError>> {
   if (userRole === "organizer" || userRole === "admin") {
     return Err(new UnauthorizedError());
+  }
+  const event = await inMemoryEventRepository.findById(eventId);
+  if (!event) return Err(new InvalidSaveError("Event not found."));
+  if (event.status === "cancelled") {
+    return Err(new InvalidSaveError("Cannot save a cancelled event."));
   }
   const existing = getSavedByUserAndEvent(userId, eventId);
   if (existing) {
