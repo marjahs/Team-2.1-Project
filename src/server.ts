@@ -4,7 +4,7 @@ import http from "node:http";
 import https from "node:https";
 import path from "node:path";
 import type { IApp, IServer } from "./contracts";
-import { createComposedApp } from "./composition";
+import { createPrismaComposedApp } from "./prismaComposition";
 
 export class HttpServer implements IServer {
   constructor(private readonly app: IApp) {}
@@ -41,7 +41,7 @@ export class HttpServer implements IServer {
 }
 
 const port = Number(process.env.HTTPS_PORT ?? process.env.PORT ?? 3443);
-const app = createComposedApp();
+const app = createPrismaComposedApp();
 const server = new HttpServer(app);
 
 server.start(port);
