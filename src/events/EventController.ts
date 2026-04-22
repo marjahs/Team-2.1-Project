@@ -1,3 +1,4 @@
+import { recordPageView, getAuthenticatedUser } from "../session/AppSession";
 import { getAuthenticatedUser } from "../session/AppSession";
 import { recordPageView } from "../session/AppSession";
 import type { Request, Response } from "express";
@@ -7,6 +8,7 @@ export interface IEventController {
   filterEvents(req: Request, res: Response): Promise<void>;
   searchEvents(req: Request, res: Response): Promise<void>;
   showEventDetail(req: Request, res: Response): Promise<void>;
+  createEvent(req: Request, res: Response): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -79,6 +81,7 @@ class EventController implements IEventController {
     });
 
     const browserSession = recordPageView(req.session as any);
+
     const isHtmx = req.get("HX-Request") === "true";
 
     if (isHtmx) {
@@ -103,6 +106,16 @@ class EventController implements IEventController {
       ? req.params.id[0]
       : req.params.id;
 
+      const user = getAuthenticatedUser(req.session as any);
+
+      if (!user) {
+        return res.status(401).render("partials/error", {
+          message: "Not authenticated",
+          layout: false,
+        });
+      }
+
+    const result = await this.eventService.getEventById(id,user?.userId);
     const user = getAuthenticatedUser(req.session as any);
     const result = await this.eventService.getEventById(id, user?.userId);
 
@@ -113,6 +126,39 @@ class EventController implements IEventController {
       });
     }
 
+    const browserSession = recordPageView(req.session as any);
+    return res.render("events/detail", {
+      event: result.value, session: browserSession,
+      pageError: null,
+    });
+  }
+
+  async createEvent(req: Request, res: Response): Promise<void> {
+    const user = getAuthenticatedUser(req.session as any);
+    if (!user) return;
+
+    const result = await this.eventService.createEvent(
+      {
+        title: req.body.title,
+        description: req.body.description,
+        location: req.body.location,
+        category: req.body.category,
+        capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+        startDatetime: new Date(req.body.startDatetime),
+        endDatetime: new Date(req.body.endDatetime),
+      },
+      user.userId
+    );
+
+    if (result.ok === false) {
+      return res.status(400).render("partials/error", {
+        message: (result.value as Error).message,
+        layout: false,
+      });
+    }
+
+    return res.redirect(`/events/${result.value.id}`);
+  }
     return res.render("events/detail", { event: result.value });
   }
 }

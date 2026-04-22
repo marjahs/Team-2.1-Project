@@ -5,6 +5,10 @@ import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
+import {
+  AuthenticationRequired,
+  AuthorizationRequired,
+} from "./auth/errors";
 import { EventService } from "./service/eventService";
 import { AuthenticationRequired, AuthorizationRequired } from "./auth/errors";
 import type { UserRole } from "./auth/User";
@@ -160,14 +164,22 @@ class ExpressApp implements IApp {
       res.render("home", { session: browserSession, pageError: null });
     }));
 
-    this.app.get("/events/new", asyncHandler(async (req, res) => {
-      if (!this.requireAuthenticated(req, res)) return;
-      res.render("events/create");
-    }));
 
     this.app.post("/events", asyncHandler(async (req, res) => {
+    this.app.get("/events/new", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.createEvent(req, res);
+    }));
 
+    
+    this.app.get("/events/new", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const browserSession = recordPageView(sessionStore(req));
+
+      res.render("events/create", {
+        session: browserSession,
+        pageError: null,
+});
       const user = getAuthenticatedUser(sessionStore(req));
       if (!user) return;
 
@@ -197,6 +209,26 @@ class ExpressApp implements IApp {
       if (!this.requireAuthenticated(req, res)) return;
       await this.eventController.filterEvents(req, res);
     }));
+
+    this.app.get("/events/search", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.searchEvents(req, res);
+    }));
+
+    
+    this.app.get("/events/:id", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.showEventDetail(req, res);
+    }));
+
+    this.app.post(
+      "/events/:eventId/rsvp/toggle",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
+      }),
+    );
+
 
     this.app.get("/events/search", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;

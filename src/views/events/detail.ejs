@@ -1,6 +1,12 @@
 <h1><%= event.title %></h1>
-<p><%= event.description %></p>
 
-<form method="POST" action="/events/<%= event.id %>/rsvp/toggle">
+<p><strong>Description:</strong> <%= event.description %></p>
+<p><strong>Location:</strong> <%= event.location %></p>
+<p><strong>Category:</strong> <%= event.category %></p>
+<p><strong>Capacity:</strong> <%= event.capacity ?? "N/A" %></p>
+<p><strong>Start:</strong> <%= event.startDatetime %></p>
+<p><strong>End:</strong> <%= event.endDatetime %></p>
+
+<form action="/events/<%= event.id %>/rsvp/toggle" method="POST">
   <button type="submit">Toggle RSVP</button>
 </form>
