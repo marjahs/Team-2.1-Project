@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { Err, Ok, type Result } from '../lib/result'
 import type { Event } from './Event'
 import type { EventRepository } from './EventRepository'
@@ -74,6 +75,16 @@ export class EventService {
       return Err(new Error("Not authorized to view this event"))
     }
 
+  async getEventById(eventId: string, userId?: string): Promise<Result<Event, Error>> {
+    const event = await this.eventRepository.findById(eventId)
+    if (!event) {
+      return Err(new EventNotFoundError())
+    
+    }
+    if (event.status === "draft" && event.organizerId !== userId) {
+      return Err(new Error("Not authorized to view this event"))
+    }
+  
     return Ok(event)
   }
 
@@ -90,6 +101,8 @@ export class EventService {
     organizerId: string
   ): Promise<Result<Event, Error>> {
 
+    
+    
     if (!data.title || !data.startDatetime || !data.endDatetime) {
       return Err(new Error("Missing required fields"))
     }
@@ -100,6 +113,7 @@ export class EventService {
 
     const event: Event = {
       id: crypto.randomUUID(),
+      id: crypto.randomUUID(), 
       title: data.title,
       description: data.description,
       location: data.location,

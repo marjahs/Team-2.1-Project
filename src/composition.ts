@@ -14,10 +14,12 @@ import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { RsvpController } from "./features/rsvp/RsvpController";
 
+export const testEventRepository = new InMemoryEventRepository();
+
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  // Authentication & authorization wiring
+ 
   const authUsers = CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
@@ -28,7 +30,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger,
   );
 
-  const eventRepository = new InMemoryEventRepository();
+  const eventRepository = testEventRepository;
   const eventService = new EventService(eventRepository);
   const eventController = CreateEventController(eventService);
 
