@@ -40,7 +40,6 @@ export class EventService {
     ) {
       return Err(new InvalidDateRangeError())
     }
-  
 
     const events = await this.eventRepository.findPublishedByFilter({
       category: input.category,
@@ -50,6 +49,7 @@ export class EventService {
 
     return Ok(events)
   }
+
   async searchPublishedEvents(
     input: SearchEventsInput
   ): Promise<Result<Event[], never>> {
@@ -57,6 +57,23 @@ export class EventService {
     const events = await this.eventRepository.searchPublished(query)
     return Ok(events)
   }
+
+  
+  async getEventById(
+    eventId: string,
+    userId?: string
+  ): Promise<Result<Event, Error>> {
+
+    const event = await this.eventRepository.findById(eventId)
+
+    if (!event) {
+      return Err(new EventNotFoundError())
+    }
+
+  
+    if (event.status === "draft" && event.organizerId !== userId) {
+      return Err(new Error("Not authorized to view this event"))
+    }
 
   async getEventById(eventId: string, userId?: string): Promise<Result<Event, Error>> {
     const event = await this.eventRepository.findById(eventId)
@@ -70,6 +87,7 @@ export class EventService {
   
     return Ok(event)
   }
+
   async createEvent(
     data: {
       title: string
@@ -82,18 +100,19 @@ export class EventService {
     },
     organizerId: string
   ): Promise<Result<Event, Error>> {
+
     
     
     if (!data.title || !data.startDatetime || !data.endDatetime) {
       return Err(new Error("Missing required fields"))
     }
-  
+
     if (data.endDatetime <= data.startDatetime) {
       return Err(new Error("End time must be after start time"))
     }
-  
-    
+
     const event: Event = {
+      id: crypto.randomUUID(),
       id: crypto.randomUUID(), 
       title: data.title,
       description: data.description,
@@ -107,9 +126,9 @@ export class EventService {
       createdAt: new Date(),
       updatedAt: new Date(),
     }
-  
+
     const created = await this.eventRepository.save(event)
-  
+
     return Ok(created)
   }
 }
