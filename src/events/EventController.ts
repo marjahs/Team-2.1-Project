@@ -1,6 +1,4 @@
 import { recordPageView, getAuthenticatedUser } from "../session/AppSession";
-import { getAuthenticatedUser } from "../session/AppSession";
-import { recordPageView } from "../session/AppSession";
 import type { Request, Response } from "express";
 import { EventService, InvalidDateRangeError } from "./EventService";
 
@@ -37,6 +35,7 @@ class EventController implements IEventController {
         });
         return;
       }
+
       res.status(500).render("partials/error", {
         message: "Unexpected server error.",
         layout: false,
@@ -44,33 +43,7 @@ class EventController implements IEventController {
       return;
     }
 
-    const isHtmx = req.get("HX-Request") === "true";
-
-    if (isHtmx) {
-      res.status(200).render("partials/filter-results", {
-        events: result.value,
-        layout: false,
-      });
-      return;
-    }
-
-    // Full page — pass events directly,
-    //  let the view render the list inline
-    const browserSession = recordPageView(req.session as any);
-    res.status(200).render("events/filter", {
-      events: result.value,
-      category: typeof category === "string" ? category : "",
-      startDatetime: typeof startDatetime === "string" ? startDatetime : "",
-      endDatetime: typeof endDatetime === "string" ? endDatetime : "",
-      session: browserSession,
-    }, (err, html) => {
-      if (err) {
-        console.error("FILTER RENDER ERROR:", err.message);
-        res.status(500).send(err.message);
-      } else {
-        res.send(html);
-      }
-    });
+    res.status(200).json(result.value);
   }
 
   async searchEvents(req: Request, res: Response): Promise<void> {
@@ -82,17 +55,6 @@ class EventController implements IEventController {
 
     const browserSession = recordPageView(req.session as any);
 
-    const isHtmx = req.get("HX-Request") === "true";
-
-    if (isHtmx) {
-      res.status(200).render("partials/search-results", {
-        events: result.value,
-        layout: false,
-      });
-      return;
-    }
-
-    // Full page — pass events directly
     res.status(200).render("events/search", {
       query: typeof q === "string" ? q : "",
       events: result.value,
@@ -106,20 +68,14 @@ class EventController implements IEventController {
       ? req.params.id[0]
       : req.params.id;
 
-      const user = getAuthenticatedUser(req.session as any);
-
-      if (!user) {
-        return res.status(401).render("partials/error", {
-          message: "Not authenticated",
-          layout: false,
-        });
-      }
-
-    const result = await this.eventService.getEventById(id,user?.userId);
     const user = getAuthenticatedUser(req.session as any);
-    const result = await this.eventService.getEventById(id, user?.userId);
 
-    if (result.ok === false) {
+    const result = await this.eventService.getEventById(
+      id,
+      user?.userId
+    );
+
+    if (!result.ok) {
       return res.status(404).render("partials/error", {
         message: (result.value as Error).message,
         layout: false,
@@ -127,8 +83,10 @@ class EventController implements IEventController {
     }
 
     const browserSession = recordPageView(req.session as any);
+
     return res.render("events/detail", {
-      event: result.value, session: browserSession,
+      event: result.value,
+      session: browserSession,
       pageError: null,
     });
   }
@@ -150,16 +108,21 @@ class EventController implements IEventController {
       user.userId
     );
 
-    if (result.ok === false) {
+    if (!result.ok) {
       return res.status(400).render("partials/error", {
         message: (result.value as Error).message,
         layout: false,
       });
     }
 
+    if (req.get("HX-Request") === "true") {
+      return res.render("partials/success", {
+        message: "Event created successfully!",
+        layout: false,
+      });
+    }
+    
     return res.redirect(`/events/${result.value.id}`);
-  }
-    return res.render("events/detail", { event: result.value });
   }
 }
 

@@ -2,7 +2,12 @@
 
 <h1>Create Event</h1>
 
-<form action="/events" method="POST">
+<form 
+  hx-post="/events"
+  hx-target="#event-result"
+  hx-swap="innerHTML"
+>
+<div id="event-result"></div>
   <div>
     <label>Title</label>
     <input type="text" name="title" required />
