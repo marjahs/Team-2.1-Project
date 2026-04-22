@@ -3,15 +3,13 @@
 
   <!-- Save/Unsave button for event detail page -->
   <% if (typeof eventId !== 'undefined') { %>
-    <form action="/events/<%= eventId %>/save" method="POST">
-      <button type="submit">
-        <% if (isSaved) { %>
-          Unsave Event
-        <% } else { %>
-          Save for Later
-        <% } %>
-      </button>
-    </form>
+    <button id="save-btn"
+          hx-post="/events/<%= eventId %>/save"
+          hx-target="#save-btn"
+          hx-swap="outerHTML"
+          class="px-4 py-2 rounded-lg border font-medium text-sm cursor-pointer">
+      <%= isSaved ? '★ Saved' : '☆ Save for Later' %>
+    </button>
   <% } %>
 
   <!-- Saved events list page -->
