@@ -47,6 +47,7 @@ class EventController implements IEventController {
   }
 
   async searchEvents(req: Request, res: Response): Promise<void> {
+  
     const { q } = req.query;
 
     const result = await this.eventService.searchPublishedEvents({
@@ -55,7 +56,14 @@ class EventController implements IEventController {
 
     const browserSession = recordPageView(req.session as any);
 
-    res.status(200).render("events/search", {
+    if (req.get("HX-Request") === "true") {
+      return res.render("partials/search-results", {
+        events: result.value,
+        layout: false,
+      });
+    }
+
+    return res.status(200).render("events/search", {
       query: typeof q === "string" ? q : "",
       events: result.value,
       pageError: null,
