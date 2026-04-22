@@ -6,13 +6,17 @@
   hx-swap="innerHTML"
   style="margin-bottom: 2rem;"
 >
-  <input
-    type="text"
-    name="q"
-    value="<%= query %>"
-    placeholder="Search title, location, category, or description..."
-    style="padding: 8px; width: 300px;"
-  >
+  <<input
+  type="text"
+  name="q"
+  value="<%= query %>"
+  placeholder="Search title, location, category, or description..."
+  style="padding: 8px; width: 300px;"
+  hx-get="/events/search"
+  hx-trigger="keyup changed delay:400ms"
+  hx-target="#search-results"
+  hx-swap="innerHTML"
+/>
   <button type="submit" style="padding: 8px 16px;">Search</button>
 </form>
 
