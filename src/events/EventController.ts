@@ -1,12 +1,12 @@
-import { recordPageView } from "../session/AppSession"
+import { recordPageView, getAuthenticatedUser } from "../session/AppSession";
 import type { Request, Response } from "express";
 import { EventService, InvalidDateRangeError } from "./EventService";
-
 
 export interface IEventController {
   filterEvents(req: Request, res: Response): Promise<void>;
   searchEvents(req: Request, res: Response): Promise<void>;
   showEventDetail(req: Request, res: Response): Promise<void>;
+  createEvent(req: Request, res: Response): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -45,32 +45,84 @@ class EventController implements IEventController {
 
     res.status(200).json(result.value);
   }
+
   async searchEvents(req: Request, res: Response): Promise<void> {
-    const { q } = req.query
-  
+    const { q } = req.query;
+
     const result = await this.eventService.searchPublishedEvents({
       query: typeof q === "string" ? q : undefined,
-    })
-  
-    const browserSession = recordPageView(req.session as any)
-  
+    });
+
+    const browserSession = recordPageView(req.session as any);
+
     res.status(200).render("events/search", {
       query: typeof q === "string" ? q : "",
       events: result.value,
       pageError: null,
       session: browserSession,
-    })
+    });
   }
-  
-  // ✅ ADD METHOD #2 RIGHT HERE (still inside the class)
+
   async showEventDetail(req: Request, res: Response): Promise<void> {
-    // implementation goes here
+    const id = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+
+      const user = getAuthenticatedUser(req.session as any);
+
+      if (!user) {
+        return res.status(401).render("partials/error", {
+          message: "Not authenticated",
+          layout: false,
+        });
+      }
+
+    const result = await this.eventService.getEventById(id,user?.userId);
+
+    if (result.ok === false) {
+      return res.status(404).render("partials/error", {
+        message: (result.value as Error).message,
+        layout: false,
+      });
+    }
+
+    const browserSession = recordPageView(req.session as any);
+    return res.render("events/detail", {
+      event: result.value, session: browserSession,
+      pageError: null,
+    });
   }
-  
-  } // <-- keep this class closing brace AFTER your new method
-  
-  export function CreateEventController(
-    eventService: EventService,
-  ): IEventController {
-    return new EventController(eventService);
+
+  async createEvent(req: Request, res: Response): Promise<void> {
+    const user = getAuthenticatedUser(req.session as any);
+    if (!user) return;
+
+    const result = await this.eventService.createEvent(
+      {
+        title: req.body.title,
+        description: req.body.description,
+        location: req.body.location,
+        category: req.body.category,
+        capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+        startDatetime: new Date(req.body.startDatetime),
+        endDatetime: new Date(req.body.endDatetime),
+      },
+      user.userId
+    );
+
+    if (result.ok === false) {
+      return res.status(400).render("partials/error", {
+        message: (result.value as Error).message,
+        layout: false,
+      });
+    }
+
+    return res.redirect(`/events/${result.value.id}`);
   }
+}
+
+export function CreateEventController(
+  eventService: EventService,
+): IEventController {
+  return new EventController(eventService);
+}

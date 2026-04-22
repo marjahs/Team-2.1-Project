@@ -5,7 +5,6 @@ import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
-import { EventService } from "./service/eventService";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -48,7 +47,6 @@ class ExpressApp implements IApp {
     this.registerMiddleware();
     this.registerTemplating();
     this.registerRoutes();
-    
   }
 
   private registerMiddleware(): void {
@@ -122,21 +120,12 @@ class ExpressApp implements IApp {
 
   private registerRoutes(): void {
     this.logger.info("Registering feature routes");
+
     this.app.get("/", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
     }));
 
-    this.app.post(
-      "/events/:eventId/rsvp/toggle",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
-      }),
-    );
-
-    
-    
     this.app.get("/login", asyncHandler(async (req, res) => {
       const store = sessionStore(req);
       const browserSession = recordPageView(store);
@@ -161,74 +150,49 @@ class ExpressApp implements IApp {
       res.render("home", { session: browserSession, pageError: null });
     }));
 
-    // ✅ EVENT CREATION ROUTES (FIXED)
-
-    this.app.get("/events/new", asyncHandler(async (req, res) => {
-      if (!this.requireAuthenticated(req, res)) return;
-      res.render("events/create");
-    }));
 
     this.app.post("/events", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
-
-      const user = getAuthenticatedUser(sessionStore(req));
-      if (!user) return;
-
-      const result = await EventService.createEvent(
-        {
-          title: req.body.title,
-          description: req.body.description,
-          location: req.body.location,
-          category: req.body.category,
-          capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
-          startDatetime: new Date(req.body.startDatetime),
-          endDatetime: new Date(req.body.endDatetime),
-        },
-        user.userId
-      );
-
-      // ✅ FIXED LINE HERE
-      if (result.ok === false) {
-        return res.status(400).render("partials/error", {
-          message: result.value.message,
-          layout: false,
-        });
-      }
-      return res.redirect(`/events/${result.value.id}`);
+      await this.eventController.createEvent(req, res);
     }));
 
-    this.app.get(
-      "/events/filter",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) {
-          return;
-        }
+    
+    this.app.get("/events/new", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const browserSession = recordPageView(sessionStore(req));
 
-        await this.eventController.filterEvents(req, res);
-      }),
-    );
+      res.render("events/create", {
+        session: browserSession,
+        pageError: null,
+});
+    }));
 
-    this.app.get(
-      "/events/:id",
+    this.app.get("/events/filter", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.filterEvents(req, res);
+    }));
+
+    this.app.get("/events/search", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.searchEvents(req, res);
+    }));
+
+    
+    this.app.get("/events/:id", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.showEventDetail(req, res);
+    }));
+
+    this.app.post(
+      "/events/:eventId/rsvp/toggle",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
-        await this.eventController.showEventDetail(req, res);
+        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
       }),
     );
 
-
-    this.app.get(
-      "/events/search",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.eventController.searchEvents(req, res);
-      }),
-    );
-    // ── Feature routes ───────────────────────────────────────────────
     this.app.use(commentsRouter);
     this.app.use(saveRouter);
-    // ── Error handler ────────────────────────────────────────────────
-     
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
       res.status(500).render("partials/error", {
