@@ -19,6 +19,9 @@ import {
 import { ILoggingService } from "./service/LoggingService";
 import commentsRouter from "./features/comments/comments.router.js";
 import saveRouter from "./features/save/save.router.js";
+import { publishEvent, cancelEvent } from './service/eventPublishingService'
+import { getAttendeesForEvent } from './service/attendeeService'
+import { inMemoryEventRepository } from './events/InMemoryEventRepository'
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -123,150 +126,172 @@ class ExpressApp implements IApp {
   private registerRoutes(): void {
     this.logger.info("Registering feature routes");
 
-    // Home redirect
-    this.app.get(
-      "/",
-      asyncHandler(async (req, res) => {
-        const store = sessionStore(req);
-        res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
-      }),
-    );
+    this.app.get("/", asyncHandler(async (req, res) => {
+      const store = sessionStore(req);
+      res.redirect(isAuthenticatedSession(store) ? "/home" : "/login");
+    }));
 
-    // Auth
-    this.app.get(
-      "/login",
-      asyncHandler(async (req, res) => {
-        const store = sessionStore(req);
-        const browserSession = recordPageView(store);
+    this.app.post("/events/:eventId/rsvp/toggle", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
+    }));
 
-        if (getAuthenticatedUser(store)) {
-          res.redirect("/home");
-          return;
-        }
+    this.app.get("/login", asyncHandler(async (req, res) => {
+      const store = sessionStore(req);
+      const browserSession = recordPageView(store);
 
-        await this.authController.showLogin(res, browserSession);
-      }),
-    );
+      if (getAuthenticatedUser(store)) {
+        res.redirect("/home");
+        return;
+      }
 
-    this.app.post(
-      "/login",
-      asyncHandler(async (req, res) => {
-        const email = typeof req.body.email === "string" ? req.body.email : "";
-        const password =
-          typeof req.body.password === "string" ? req.body.password : "";
-        await this.authController.loginFromForm(res, email, password, sessionStore(req));
-      }),
-    );
+      await this.authController.showLogin(res, browserSession);
+    }));
 
-    this.app.post(
-      "/logout",
-      asyncHandler(async (req, res) => {
-        await this.authController.logoutFromForm(res, sessionStore(req));
-      }),
-    );
+    this.app.post("/login", asyncHandler(async (req, res) => {
+      const email = typeof req.body.email === "string" ? req.body.email : "";
+      const password = typeof req.body.password === "string" ? req.body.password : "";
+      await this.authController.loginFromForm(res, email, password, sessionStore(req));
+    }));
 
-    // Authenticated home
-    this.app.get(
-      "/home",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        const browserSession = recordPageView(sessionStore(req));
-        res.render("home", { session: browserSession, pageError: null });
-      }),
-    );
+    this.app.get("/home", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const browserSession = recordPageView(sessionStore(req));
+      res.render("home", { session: browserSession, pageError: null });
+    }));
 
-    // RSVP toggle (Feature 4)
-    this.app.post(
-      "/events/:eventId/rsvp/toggle",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
-      }),
-    );
+    this.app.get("/events/new", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      res.render("events/create");
+    }));
 
-    // Event creation
-    this.app.get(
-      "/events/new",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        const browserSession = recordPageView(sessionStore(req));
-        res.render("events/create", { session: browserSession, pageError: null });
-      }),
-    );
+    this.app.post("/events", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
 
-    this.app.post(
-      "/events",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
+      const user = getAuthenticatedUser(sessionStore(req));
+      if (!user) return;
 
-        const user = getAuthenticatedUser(sessionStore(req));
-        if (!user) return;
+      const result = await EventService.createEvent(
+        {
+          title: req.body.title,
+          description: req.body.description,
+          location: req.body.location,
+          category: req.body.category,
+          capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+          startDatetime: new Date(req.body.startDatetime),
+          endDatetime: new Date(req.body.endDatetime),
+        },
+        user.userId
+      );
 
-        const result = await EventService.createEvent(
-          {
-            title: req.body.title,
-            description: req.body.description,
-            location: req.body.location,
-            category: req.body.category,
-            capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
-            startDatetime: new Date(req.body.startDatetime),
-            endDatetime: new Date(req.body.endDatetime),
-          },
-          user.userId,
-        );
+      if (result.ok === false) {
+        return res.status(400).render("partials/error", {
+          message: ( result.value as { name: string; message: string }).message,
+          layout: false,
+        });
+      }
+      return res.redirect(`/events/${result.value.id}`);
+    }));
 
-        if (result.ok === false) {
-          return res.status(400).render("partials/error", {
-            message: result.value.message,
-            layout: false,
-          });
-        }
+    this.app.get("/events/filter", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.filterEvents(req, res);
+    }));
 
-        return res.redirect(`/events/${result.value.id}`);
-      }),
-    );
+    this.app.get("/events/search", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.searchEvents(req, res);
+    }));
 
-    // Event filter/search MUST come before /events/:id
-    this.app.get(
-      "/events/filter",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.eventController.filterEvents(req, res);
-      }),
-    );
+    // Feature 2 — Event detail page
+    this.app.get("/events/:id", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      await this.eventController.showEventDetail(req, res);
+    }));
 
-    this.app.get(
-      "/events/search",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.eventController.searchEvents(req, res);
-      }),
-    );
+    // Feature 5 — Event Publishing
+    this.app.post("/events/:eventId/publish", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const user = getAuthenticatedUser(sessionStore(req));
+      if (!user) return;
+      const eventId = typeof req.params.eventId === 'string'
+        ? req.params.eventId
+        : req.params.eventId[0];
+      const result = await publishEvent(eventId, user.userId);
+      if (!result.ok) {
+        const error = result.value as { name: string; message: string };
+        const status =
+          error.name === 'EventNotFoundError'  ? 404 :
+          error.name === 'UnauthorizedError'   ? 403 : 400;
+        res.status(status).render('partials/error', {
+          message: error.message,
+          layout: false,
+        });
+        return;
+      }
+      res.redirect(`/events/${eventId}`);
+    }));
 
-    // Event detail (must be after /events/search and /events/new)
-    this.app.get(
-      "/events/:id",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
-        await this.eventController.showEventDetail(req, res);
-      }),
-    );
+    // Feature 5 — Event Cancellation
+    this.app.post("/events/:eventId/cancel", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const user = getAuthenticatedUser(sessionStore(req));
+      if (!user) return;
+      const eventId = typeof req.params.eventId === 'string'
+        ? req.params.eventId
+        : req.params.eventId[0];
+      const result = await cancelEvent(eventId, user.userId);
+      if (!result.ok) {
+        const error = result.value as { name: string; message: string };
+        const status =
+          error.name === 'EventNotFoundError'  ? 404 :
+          error.name === 'UnauthorizedError'   ? 403 : 400;
+        res.status(status).render('partials/error', {
+          message: error.message,
+          layout: false,
+        });
+        return;
+      }
+      res.redirect(`/events/${eventId}`);
+    }));
 
-    // Feature routers
+    // Feature 12 — Attendee List
+    this.app.get("/events/:eventId/attendees", asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return;
+      const user = getAuthenticatedUser(sessionStore(req));
+      if (!user) return;
+      const eventId = typeof req.params.eventId === 'string'
+        ? req.params.eventId
+        : req.params.eventId[0];
+      const result = await getAttendeesForEvent(eventId, user.userId, user.role);
+      if (!result.ok) {
+        const error = result.value as { name: string; message: string };
+        const status =
+          error.name === 'AttendeeEventNotFoundError' ? 404 :
+          error.name === 'AttendeeUnauthorizedError'  ? 403 : 400;
+        res.status(status).render('partials/error', {
+          message: error.message,
+          layout: false,
+        });
+        return;
+      }
+      res.render('events/attendee-list', {
+        attendees: result.value,
+        eventId,
+      });
+    }));
+
+    // ── Feature routers ──────────────────────────────────────────────
     this.app.use(commentsRouter);
     this.app.use(saveRouter);
 
-    // Error handler
-    this.app.use(
-      (err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
-        const message = err instanceof Error ? err.message : "Unexpected server error.";
-        this.logger.error(message);
-        res.status(500).render("partials/error", {
-          message: "Unexpected server error.",
-          layout: false,
-        });
-      },
-    );
+    // ── Error handler ────────────────────────────────────────────────
+    this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
+      res.status(500).render("partials/error", {
+        message: "Unexpected server error.",
+        layout: false,
+      });
+    });
   }
 
   getExpressApp(): express.Express {
