@@ -1,22 +1,38 @@
 import type { Request, Response } from 'express'
 import { publishEvent, cancelEvent } from '../service/eventPublishingService'
+import { getAuthenticatedUser } from '../session/AppSession'
+import type { PublishError, CancelError } from '../service/eventPublishingService'
+
+function errorStatus(name: string): number {
+  if (name === 'EventNotFoundError') return 404
+  if (name === 'UnauthorizedError') return 403
+  return 400
+}
 
 export async function handlePublish(req: Request, res: Response): Promise<void> {
-  const userId = req.session.userId 
-  const  eventId  = req.params.eventId as string
+  const user = getAuthenticatedUser(req.session as any)
+  const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId
 
-  if (!userId) {
-    res.status(401).send('You must be logged in to publish an event')
+  if (!user) {
+    res.status(401).render('partials/error', { message: 'You must be logged in.', layout: false })
     return
   }
 
-  const result = await publishEvent(eventId, userId)
+  const result = await publishEvent(eventId, user.userId)
 
   if (!result.ok) {
-    const status =
-      result.value.name === 'EventNotFoundError'  ? 404 :
-      result.value.name === 'UnauthorizedError'   ? 403 : 400
-    res.status(status).send(result.value.message)
+  const error = result.value as PublishError
+  const status = errorStatus(error.name)
+    if (req.get('HX-Request') === 'true') {
+      res.status(status).render('partials/error', { message: error.message, layout: false })
+      return
+    }
+  res.status(status).send(error.message)
+  return
+  }
+
+  if (req.get('HX-Request') === 'true') {
+    res.render('partials/event-actions', { event: result.value, session: { authenticatedUser: user }, layout: false })
     return
   }
 
@@ -24,22 +40,25 @@ export async function handlePublish(req: Request, res: Response): Promise<void> 
 }
 
 export async function handleCancel(req: Request, res: Response): Promise<void> {
-  const userId = req.session.userId 
-  const  eventId  = req.params.eventID as string
+  const user = getAuthenticatedUser(req.session as any)
+  const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId
 
-  if (!userId) {
-    res.status(401).send('You must be logged in to cancel an event')
+  if (!user) {
+    res.status(401).render('partials/error', { message: 'You must be logged in.', layout: false })
     return
   }
 
-  const result = await cancelEvent(eventId, userId)
+  const result = await cancelEvent(eventId, user.userId, user.role)
 
   if (!result.ok) {
-    const status =
-      result.value.name === 'EventNotFoundError'  ? 404 :
-      result.value.name === 'UnauthorizedError'   ? 403 : 400
-    res.status(status).send(result.value.message)
-    return
+  const error = result.value as CancelError
+  const status = errorStatus(error.name)
+    if (req.get('HX-Request') === 'true') {
+      res.status(status).render('partials/error', { message: error.message, layout: false })
+      return
+    }
+  res.status(status).send(error.message)
+  return
   }
 
   res.redirect(`/events/${eventId}`)

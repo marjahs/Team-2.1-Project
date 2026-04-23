@@ -46,7 +46,7 @@ export class RsvpController {
 
     if (!result.ok) {
       res.status(this.statusForError(result.value)).render("partials/error", {
-        message: result.value.message,
+        message: (result.value as any).message,
         layout: false,
       });
       return;
