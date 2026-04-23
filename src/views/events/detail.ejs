@@ -7,6 +7,4 @@
 <p><strong>Start:</strong> <%= event.startDatetime %></p>
 <p><strong>End:</strong> <%= event.endDatetime %></p>
 
-<form action="/events/<%= event.id %>/rsvp/toggle" method="POST">
-  <button type="submit">Toggle RSVP</button>
-</form>
+<%- include("../partials/rsvp-widget", { event, rsvp: null }) %>

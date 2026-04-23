@@ -1,55 +1,87 @@
 import { Err, Ok, type Result } from "../lib/result";
+import type { UserRole } from "../auth/User";
 import type { EventRepository } from "../events/EventRepository";
 import type { IRsvpRepository } from "../repository/RsvpRepository";
 import type { Rsvp, RsvpStatus } from "../repository/Rsvp";
-import { RsvpEventNotFoundError, RsvpEventNotRsvpableError, type RsvpToggleError } from "./RsvpErrors";
+import {
+  RsvpEventNotFoundError,
+  RsvpEventNotRsvpableError,
+  RsvpInvalidInputError,
+  type RsvpToggleError,
+} from "./RsvpErrors";
 
 export interface RsvpService {
-  toggleRsvp(params: { eventId: string; actingUserId: string }): Promise<Result<Rsvp, RsvpToggleError>>;
+  toggleRsvp(params: {
+    eventId: string;
+    actingUserId: string;
+    actingUserRole?: UserRole;
+  }): Promise<Result<Rsvp, RsvpToggleError>>;
 }
 
-export function CreateRsvpService(events: EventRepository, rsvps: IRsvpRepository): RsvpService {
+export function CreateRsvpService(
+  events: EventRepository,
+  rsvps: IRsvpRepository,
+): RsvpService {
   return {
-    async toggleRsvp({ eventId, actingUserId }) {
-      // Find event (no getById available, so scan)
-      const allEvents = await events.getAll();
-      const event = allEvents.find(e => e.id === eventId);
+    async toggleRsvp({ eventId, actingUserId, actingUserRole }) {
+      const trimmedEventId = eventId.trim();
+      const trimmedUserId = actingUserId.trim();
+
+      if (!trimmedEventId || !trimmedUserId) {
+        return Err(new RsvpInvalidInputError("Missing RSVP information."));
+      }
+
+      const event = await events.findById(trimmedEventId);
       if (!event) return Err(new RsvpEventNotFoundError());
 
       if (event.status !== "published") {
-        return Err(new RsvpEventNotRsvpableError("You can only RSVP to published events."));
+        return Err(
+          new RsvpEventNotRsvpableError("You can only RSVP to published events."),
+        );
+      }
+
+      if (actingUserRole === "admin") {
+        return Err(
+          new RsvpEventNotRsvpableError("Admins cannot RSVP to events."),
+        );
+      }
+
+      if (event.organizerId === trimmedUserId) {
+        return Err(
+          new RsvpEventNotRsvpableError(
+            "Organizers cannot RSVP to their own events.",
+          ),
+        );
       }
 
       const decideActiveStatus = async (): Promise<RsvpStatus> => {
-        // If no capacity => always going
         if (event.capacity === undefined) return "going";
 
-        const allForEvent = await rsvps.listByEvent(eventId);
-        const goingCount = allForEvent.filter(r => r.status === "going").length;
+        const allForEvent = await rsvps.listByEvent(trimmedEventId);
+        const goingCount = allForEvent.filter((rsvp) => rsvp.status === "going").length;
+
         return goingCount < event.capacity ? "going" : "waitlisted";
       };
 
-      const existing = await rsvps.findByEventAndUser(eventId, actingUserId);
+      const existing = await rsvps.findByEventAndUser(trimmedEventId, trimmedUserId);
 
-      // 1) new RSVP
       if (!existing) {
         const status = await decideActiveStatus();
-        const created: Rsvp = {
-          id: "",
-          eventId,
-          userId: actingUserId,
-          status,
-          createdAt: new Date(),
-        };
-        return Ok(await rsvps.create(created));
+        return Ok(
+          await rsvps.create({
+            id: "",
+            eventId: trimmedEventId,
+            userId: trimmedUserId,
+            status,
+            createdAt: new Date(),
+          }),
+        );
       }
 
-      // 2) active -> cancelled
       if (existing.status === "going" || existing.status === "waitlisted") {
         return Ok(await rsvps.update({ ...existing, status: "cancelled" }));
       }
 
-      // 3) cancelled -> reactivated
       const status = await decideActiveStatus();
       return Ok(await rsvps.update({ ...existing, status }));
     },
