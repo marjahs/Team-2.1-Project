@@ -2,9 +2,25 @@ import type { Request, Response } from "express";
 import type { AppSessionStore } from "../../session/AppSession";
 import { getAuthenticatedUser } from "../../session/AppSession";
 import type { RsvpService } from "../../service/RsvpService";
+import {
+  RsvpEventNotFoundError,
+  RsvpEventNotRsvpableError,
+  RsvpInvalidInputError,
+} from "../../service/RsvpErrors";
 
 export class RsvpController {
   constructor(private readonly rsvpService: RsvpService) {}
+
+  private isHtmxRequest(req: Request): boolean {
+    return req.get("HX-Request") === "true";
+  }
+
+  private statusForError(error: unknown): number {
+    if (error instanceof RsvpInvalidInputError) return 400;
+    if (error instanceof RsvpEventNotFoundError) return 404;
+    if (error instanceof RsvpEventNotRsvpableError) return 403;
+    return 400;
+  }
 
   async toggleFromForm(
     req: Request,
@@ -25,12 +41,21 @@ export class RsvpController {
     const result = await this.rsvpService.toggleRsvp({
       eventId,
       actingUserId: currentUser.userId,
+      actingUserRole: currentUser.role,
     });
 
-    if (result.ok === false) {
-      const err = result.value;
-      res.status(400).render("partials/error", {
-        message: err instanceof Error ? err.message : "Unable to toggle RSVP.",
+    if (!result.ok) {
+      res.status(this.statusForError(result.value)).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    if (this.isHtmxRequest(req)) {
+      res.status(200).render("partials/rsvp-widget", {
+        event: { id: result.value.eventId },
+        rsvp: result.value,
         layout: false,
       });
       return;
