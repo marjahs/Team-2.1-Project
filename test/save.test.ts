@@ -10,10 +10,12 @@ describe("Feature 14 — Save for Later", () => {
   beforeAll(async () => {
     await memberAgent
       .post("/login")
-      .send({ email: "user@app.test", password: "password123" });
+      .send({ email: "user@app.test", password: "password123" })
+      .redirects(1);
     await adminAgent
       .post("/login")
-      .send({ email: "admin@app.test", password: "password123" });
+      .send({ email: "admin@app.test", password: "password123" })
+      .redirects(1);
   });
 
   describe("POST /events/:eventId/save", () => {
