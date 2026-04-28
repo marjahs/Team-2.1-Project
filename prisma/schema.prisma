@@ -36,6 +36,15 @@ model Rsvp {
 
   @@unique([eventId, userId])
 }
+model Comment {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id])
+}
+
 model SavedEvent {
   id        String   @id @default(cuid())
   eventId   String
