@@ -28,35 +28,35 @@ export class UnauthorizedError extends Error {
   }
 }
 
-export function postComment(
+export async function postComment(
   eventId: string,
   userId: string,
   text: string
-): Result<Comment, InvalidInputError> {
+): Promise<Result<Comment, InvalidInputError>> {
   if (!text || text.trim() === "") {
     return Err(new InvalidInputError("Comment cannot be empty"));
   }
   if (text.length > 500) {
     return Err(new InvalidInputError("Comment cannot exceed 500 characters"));
   }
-  const comment = createComment(eventId, userId, text.trim());
+  const comment = await createComment(eventId, userId, text.trim());
   return Ok(comment);
 }
 
-export function getComments(
+export async function getComments(
   eventId: string
-): Result<Comment[], never> {
-  const result = getCommentsByEvent(eventId);
+): Promise<Result<Comment[], never>> {
+  const result = await getCommentsByEvent(eventId);
   return Ok(result);
 }
 
-export function removeComment(
+export async function removeComment(
   commentId: string,
   userId: string,
   userRole: string,
   organizerId: string
-): Result<{ id: string; deleted: boolean }, CommentNotFoundError | UnauthorizedError> {
-  const comment = getCommentById(commentId);
+): Promise<Result<{ id: string; deleted: boolean }, CommentNotFoundError | UnauthorizedError>> {
+  const comment = await getCommentById(commentId);
   if (!comment) {
     return Err(new CommentNotFoundError());
   }
@@ -66,6 +66,6 @@ export function removeComment(
   if (!isAuthor && !isOrganizer && !isAdmin) {
     return Err(new UnauthorizedError());
   }
-  deleteComment(commentId);
+  await deleteComment(commentId);
   return Ok({ id: commentId, deleted: true });
 }
