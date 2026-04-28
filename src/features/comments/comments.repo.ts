@@ -4,11 +4,16 @@ import path from "path";
 
 const dbUrl = `file:${path.resolve(process.cwd(), "dev.db")}`;
 
-const adapter = new PrismaBetterSqlite3({
-  url: dbUrl,
-});
-
-const prisma = new PrismaClient({ adapter });
+let prisma: PrismaClient;
+try {
+  const adapter = new PrismaBetterSqlite3({
+    url: dbUrl,
+  });
+  prisma = new PrismaClient({ adapter });
+} catch (e: any) {
+  console.error("PRISMA INIT ERROR:", e.message);
+  throw e;
+}
 
 export interface Comment {
   id: string;

@@ -3,6 +3,7 @@ import { postComment, getComments, removeComment } from "./comments.service.js";
 import { getAuthenticatedUser } from "../../session/AppSession.js";
 
 export async function handlePostComment(req: Request, res: Response) {
+  console.log("BODY:", req.body);
   const eventId =
     typeof req.params.eventId === "string" ? req.params.eventId : "";
   const text =
