@@ -1,6 +1,19 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import path from "path";
 
-const prisma = new PrismaClient();
+const dbUrl = `file:${path.resolve(process.cwd(), "dev.db")}`;
+
+let prisma: PrismaClient;
+try {
+  const adapter = new PrismaBetterSqlite3({
+    url: dbUrl,
+  });
+  prisma = new PrismaClient({ adapter });
+} catch (e: any) {
+  console.error("PRISMA INIT ERROR:", e.message);
+  throw e;
+}
 
 export interface Comment {
   id: string;

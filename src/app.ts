@@ -21,7 +21,6 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
-import commentsRouter from "./features/comments/comments.router.js";
 import saveRouter from "./features/save/save.router.js";
 
 type AsyncRequestHandler = RequestHandler;
@@ -44,6 +43,8 @@ class ExpressApp implements IApp {
     private readonly eventController: IEventController,
     private readonly rsvpController: RsvpController,
     private readonly logger: ILoggingService,
+    private readonly commentsRouter: express.Router, 
+
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -65,8 +66,9 @@ class ExpressApp implements IApp {
         },
       }),
     );
+    this.app.use(express.urlencoded({ extended: true })); // ← moved up
+    this.app.use(express.json());                         // ← add this
     this.app.use(Layouts);
-    this.app.use(express.urlencoded({ extended: true }));
   }
 
   private registerTemplating(): void {
@@ -205,10 +207,11 @@ class ExpressApp implements IApp {
       await this.rsvpController.toggleFromForm(req, res, sessionStore(req));
     }));
 
-    this.app.use(commentsRouter);
+    this.app.use(this.commentsRouter);
     this.app.use(saveRouter);
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
+      console.error("UNHANDLED ERROR:", err);
       res.status(500).render("partials/error", {
         message: "Unexpected server error.",
         layout: false,
@@ -226,6 +229,7 @@ export function CreateApp(
   eventController: IEventController,
   rsvpController: RsvpController,
   logger: ILoggingService,
+  commentsRouter: express.Router,
 ): IApp {
-  return new ExpressApp(authController, eventController, rsvpController, logger);
+  return new ExpressApp(authController, eventController, rsvpController, logger, commentsRouter);
 }

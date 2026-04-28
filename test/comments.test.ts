@@ -9,7 +9,8 @@ describe("Feature 13 — Comments", () => {
   beforeAll(async () => {
     await agent
       .post("/login")
-      .send({ email: "user@app.test", password: "password123" });
+      .send({ email: "user@app.test", password: "password123" })
+      .redirects(1);
   });
 
   describe("POST /events/:eventId/comments", () => {
@@ -78,7 +79,8 @@ describe("Feature 13 — Comments", () => {
       const staffAgent = request.agent(app);
       await staffAgent
         .post("/login")
-        .send({ email: "staff@app.test", password: "password123" });
+        .send({ email: "staff@app.test", password: "password123" })
+        .redirects(1);
       const res = await staffAgent.delete(`/comments/${commentId}`);
       expect(res.status).toBe(403);
     });
