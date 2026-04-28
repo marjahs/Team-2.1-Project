@@ -10,7 +10,7 @@ export async function handlePostComment(req: Request, res: Response) {
   const user = getAuthenticatedUser(req.session as any);
   if (!user) return res.status(401).send("Not authenticated");
 
-  const result = postComment(eventId, user.userId, text);
+  const result = await postComment(eventId, user.userId, text);
   if (result.ok === false) {
     return res.status(400).send(result.value.message);
   }
@@ -24,7 +24,7 @@ export async function handleGetComments(req: Request, res: Response) {
   if (!user) return res.status(401).send("Not authenticated");
   if (!eventId) return res.status(400).send("Event ID is required");
 
-  const result = getComments(eventId);
+  const result = await getComments(eventId);
   if (result.ok === false) {
     return res.status(400).send("Unable to load comments");
   }
@@ -47,7 +47,7 @@ export async function handleDeleteComment(req: Request, res: Response) {
       ? (req.body as any).organizerId
       : "";
 
-  const result = removeComment(commentId, user.userId, user.role, organizerId);
+  const result = await removeComment(commentId, user.userId, user.role, organizerId);
   if (result.ok === false) {
     if (result.value.name === "CommentNotFoundError") {
       return res.status(404).send(result.value.message);
