@@ -194,6 +194,7 @@ class ExpressApp implements IApp {
     this.app.use(saveRouter);
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
+      console.error("UNHANDLED ERROR:", err);
       res.status(500).render("partials/error", {
         message: "Unexpected server error.",
         layout: false,
