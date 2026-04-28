@@ -7,4 +7,25 @@
 <p><strong>Start:</strong> <%= event.startDatetime %></p>
 <p><strong>End:</strong> <%= event.endDatetime %></p>
 
-<%- include("../partials/rsvp-widget", { event, rsvp: null }) %>
+<%# --- Publish / Cancel controls (Feature 5) --- %>
+<%- include("../partials/event-actions", { event, session }) %>
+
+<%# --- RSVP widget (Feature 4, members only) --- %>
+<% if (session.authenticatedUser?.role === 'member') { %>
+  <%- include("../partials/rsvp-widget", { event, rsvp: null }) %>
+<% } %>
+
+<%# --- Attendee list button (Feature 12, organizer/admin only) --- %>
+<% const isOrganizer = session.authenticatedUser?.userId === event.organizerId %>
+<% const isAdmin = session.authenticatedUser?.role === 'admin' %>
+<% if (isOrganizer || isAdmin) { %>
+  <div>
+    <button
+      hx-get="/events/<%= event.id %>/attendees"
+      hx-target="#attendee-list"
+      hx-swap="innerHTML">
+      View Attendees
+    </button>
+    <div id="attendee-list"></div>
+  </div>
+<% } %>

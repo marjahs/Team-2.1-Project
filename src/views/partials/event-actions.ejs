@@ -1,0 +1,26 @@
+<div id="event-actions">
+  <span class="status-badge status-<%= event.status %>">
+    <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+  </span>
+
+  <% const isOrganizer = session.authenticatedUser?.userId === event.organizerId %>
+  <% const isAdmin = session.authenticatedUser?.role === 'admin' %>
+
+  <% if (isOrganizer || isAdmin) { %>
+    <% if (event.status === 'draft') { %>
+      <form hx-post="/events/<%= event.id %>/publish"
+            hx-target="#event-actions"
+            hx-swap="outerHTML">
+        <button type="submit">Publish Event</button>
+      </form>
+    <% } %>
+
+    <% if (event.status === 'draft' || event.status === 'published') { %>
+      <form hx-post="/events/<%= event.id %>/cancel"
+            hx-target="#event-actions"
+            hx-swap="outerHTML">
+        <button type="submit">Cancel Event</button>
+      </form>
+    <% } %>
+  <% } %>
+</div>

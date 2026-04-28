@@ -1,4 +1,6 @@
 import path from "node:path";
+import { handlePublish, handleCancel } from './controllers/eventPublishingController'
+import { handleGetAttendees } from './controllers/attendeeController'
 import type { IEventController } from "./events/EventController";
 import type { RsvpController } from "./features/rsvp/RsvpController";
 import express, { Request, RequestHandler, Response } from "express";
@@ -178,7 +180,20 @@ class ExpressApp implements IApp {
       if (!this.requireAuthenticated(req, res)) return;
       await this.eventController.searchEvents(req, res);
     }));
+    this.app.post('/events/:eventId/publish', asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return
+        await handlePublish(req, res)
+    }))
 
+    this.app.post('/events/:eventId/cancel', asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return
+      await handleCancel(req, res)
+    }))
+
+    this.app.get('/events/:eventId/attendees', asyncHandler(async (req, res) => {
+      if (!this.requireAuthenticated(req, res)) return
+      await handleGetAttendees(req, res)
+    }))
     // MUST BE LAST
     this.app.get("/events/:id", asyncHandler(async (req, res) => {
       if (!this.requireAuthenticated(req, res)) return;
