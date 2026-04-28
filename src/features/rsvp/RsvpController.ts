@@ -49,6 +49,7 @@ export class RsvpController {
     
       res.status(this.statusForError(error)).render("partials/error", {
         message: error instanceof Error ? error.message : "Unable to toggle RSVP.",
+
         layout: false,
       });
       return;

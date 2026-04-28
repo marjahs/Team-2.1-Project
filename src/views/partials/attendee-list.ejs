@@ -1,0 +1,52 @@
+<div id="attendee-list">
+  <h2>Attendees</h2>
+
+  <% if (grouped.attending.length === 0 && grouped.waitlisted.length === 0 && grouped.cancelled.length === 0) { %>
+    <p>No one has RSVP'd yet.</p>
+  <% } %>
+
+  <% if (grouped.attending.length > 0) { %>
+    <h3>Attending (<%= grouped.attending.length %>)</h3>
+    <table>
+      <thead><tr><th>Name</th><th>RSVP'd At</th></tr></thead>
+      <tbody>
+        <% grouped.attending.forEach(function(a) { %>
+          <tr>
+            <td><%= a.displayName %></td>
+            <td><%= new Date(a.createdAt).toLocaleString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <% if (grouped.waitlisted.length > 0) { %>
+    <h3>Waitlisted (<%= grouped.waitlisted.length %>)</h3>
+    <table>
+      <thead><tr><th>Name</th><th>RSVP'd At</th></tr></thead>
+      <tbody>
+        <% grouped.waitlisted.forEach(function(a) { %>
+          <tr>
+            <td><%= a.displayName %></td>
+            <td><%= new Date(a.createdAt).toLocaleString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <% if (grouped.cancelled.length > 0) { %>
+    <h3>Cancelled (<%= grouped.cancelled.length %>)</h3>
+    <table>
+      <thead><tr><th>Name</th><th>RSVP'd At</th></tr></thead>
+      <tbody>
+        <% grouped.cancelled.forEach(function(a) { %>
+          <tr>
+            <td><%= a.displayName %></td>
+            <td><%= new Date(a.createdAt).toLocaleString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>

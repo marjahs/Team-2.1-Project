@@ -1,6 +1,6 @@
-import { Ok, Err, type Result } from '../lib/result'
-import { inMemoryEventRepository } from '../events/InMemoryEventRepository'
-import type { Event } from '../events/Event'
+import { Ok, Err, type Result } from "../lib/result"
+import { inMemoryEventRepository } from "../events/InMemoryEventRepository"
+import type { Event } from "../events/Event"
 
 // Error classes
 export class EventNotFoundError extends Error {
@@ -66,17 +66,18 @@ export async function publishEvent(
  */
 export async function cancelEvent(
   eventId: string,
-  userId: string
+  userId: string,
+  userRole: string           // add this
 ): Promise<Result<Event, CancelError>> {
 
-  // Rule 1: Event must exist
   const event = await inMemoryEventRepository.findById(eventId)
   if (!event) return Err(new EventNotFoundError())
 
-  // Rule 2: Only the organizer can cancel
-  if (event.organizerId !== userId) return Err(new UnauthorizedError())
+  // Organizer OR admin can cancel
+  const isOrganizer = event.organizerId === userId
+  const isAdmin = userRole === 'admin'
+  if (!isOrganizer && !isAdmin) return Err(new UnauthorizedError())
 
-  // Rule 3: Can't cancel what's already cancelled or past
   if (event.status === 'cancelled') {
     return Err(new InvalidStateError('This event is already cancelled.'))
   }
