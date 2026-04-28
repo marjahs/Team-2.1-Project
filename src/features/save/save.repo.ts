@@ -1,4 +1,6 @@
-import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export interface SavedEvent {
   id: string;
@@ -7,34 +9,37 @@ export interface SavedEvent {
   createdAt: Date;
 }
 
-const savedEvents: SavedEvent[] = [];
-
-export function getSavedByUser(userId: string): SavedEvent[] {
-  return savedEvents.filter((s) => s.userId === userId);
+export async function getSavedByUser(userId: string): Promise<SavedEvent[]> {
+  return await prisma.savedEvent.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
-export function getSavedByUserAndEvent(
+export async function getSavedByUserAndEvent(
   userId: string,
   eventId: string
-): SavedEvent | undefined {
-  return savedEvents.find((s) => s.userId === userId && s.eventId === eventId);
+): Promise<SavedEvent | undefined> {
+  const result = await prisma.savedEvent.findUnique({
+    where: { eventId_userId: { eventId, userId } },
+  });
+  return result ?? undefined;
 }
 
-export function createSaved(userId: string, eventId: string): SavedEvent {
-  const saved: SavedEvent = {
-    id: randomUUID(),
-    eventId,
-    userId,
-    createdAt: new Date(),
-  };
-  savedEvents.push(saved);
-  return saved;
+export async function createSaved(
+  userId: string,
+  eventId: string
+): Promise<SavedEvent> {
+  return await prisma.savedEvent.create({
+    data: { userId, eventId },
+  });
 }
 
-export function deleteSaved(id: string): boolean {
-  const index = savedEvents.findIndex((s) => s.id === id);
-  if (index === -1) return false;
-  savedEvents.splice(index, 1);
-  return true;}
-
-  
+export async function deleteSaved(id: string): Promise<boolean> {
+  try {
+    await prisma.savedEvent.delete({ where: { id } });
+    return true;
+  } catch {
+    return false;
+  }
+}
