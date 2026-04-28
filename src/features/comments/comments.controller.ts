@@ -12,9 +12,16 @@ export async function handlePostComment(req: Request, res: Response) {
 
   const result = await postComment(eventId, user.userId, text);
   if (result.ok === false) {
-    return res.status(400).send(result.value.message);
+    return res.status(400).send(
+      `<p id="comment-error" class="text-red-600 text-sm">${result.value.message}</p>`
+    );
   }
-  return res.redirect(`/events/${eventId}/comments`);
+  return res.status(201).render("partials/comment-item", {
+    comment: result.value,
+    currentUserId: user.userId,
+    userRole: user.role,
+    layout: false,
+  });
 }
 
 export async function handleGetComments(req: Request, res: Response) {
