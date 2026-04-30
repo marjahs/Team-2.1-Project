@@ -27,7 +27,7 @@ export function createCommentsController(service: ReturnType<typeof createCommen
       const result = await service.postComment(eventId, user.userId, text);
       if (!result.ok) {
         return res.status(400).send(
-          `<p id="comment-error" class="text-red-600 text-sm">${result.value.message}</p>`
+          `<p id="comment-error" class="text-red-600 text-sm">${(result.value as any).message}</p>`
         );
       }
       return res.status(201).render("partials/comment-item", {
