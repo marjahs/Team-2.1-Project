@@ -18,8 +18,10 @@ function toRsvp(row: any): Rsvp {
 
 export class PrismaRsvpRepository implements IRsvpRepository {
   async findByEventAndUser(eventId: string, userId: string): Promise<Rsvp | null> {
-    const row = await prisma.rsvp.findFirst({
-      where: { eventId, userId },
+    const row = await prisma.rsvp.findUnique({
+      where: {
+        eventId_userId: { eventId, userId },
+      },
     })
     return row ? toRsvp(row) : null
   }

@@ -13,6 +13,9 @@ import type { ILoggingService } from "./service/LoggingService";
 import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { RsvpController } from "./features/rsvp/RsvpController";
+import * as commentRepo from "./features/comments/InMemoryCommentRepository.js";
+import { createCommentService } from "./features/comments/comments.service.js";
+import { createCommentsRouter } from "./features/comments/comments.router.js";
 
 export function createPrismaComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -35,5 +38,14 @@ export function createPrismaComposedApp(logger?: ILoggingService): IApp {
   const rsvpService = CreateRsvpService(eventRepository, rsvpRepository);
   const rsvpController = new RsvpController(rsvpService);
 
-  return CreateApp(authController, eventController, rsvpController, resolvedLogger);
+  const commentService = createCommentService(commentRepo);
+  const commentsRouter = createCommentsRouter(commentService);
+
+  return CreateApp(
+    authController,
+    eventController,
+    rsvpController,
+    resolvedLogger,
+    commentsRouter,
+  );
 }
