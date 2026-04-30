@@ -109,17 +109,23 @@ export class PrismaEventRepository implements EventRepository {
 
   async update(
     id: string,
-    fields: Partial<Omit<Event, "id" | "createdAt">>
+    fields: Partial<Omit<Event, "id" | "createdAt">>,
   ): Promise<Event | null> {
     try {
+      const data: any = {
+        ...fields,
+        updatedAt: new Date(),
+      };
+
+      if ("capacity" in fields) {
+        data.capacity = fields.capacity ?? null;
+      }
+
       const row = await prisma.event.update({
         where: { id },
-        data: {
-          ...fields,
-          capacity: fields.capacity ?? null,
-          updatedAt: new Date(),
-        },
+        data,
       });
+
       return toEvent(row);
     } catch {
       return null;
