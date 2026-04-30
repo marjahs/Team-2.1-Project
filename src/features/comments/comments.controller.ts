@@ -44,8 +44,8 @@ export function createCommentsController(service: ReturnType<typeof createCommen
       if (!user) return res.status(401).send("Not authenticated");
       const result = await service.removeComment(commentId, user.userId, user.role, "");
       if (!result.ok) {
-       if ((result.value as any).name === "CommentNotFoundError") return res.status(404).send((result.value as any).message);
-      return res.status(403).send((result.value as any).message);
+        if ((result.value as any).name === "CommentNotFoundError") return res.status(404).send((result.value as any).message);
+        return res.status(403).send((result.value as any).message);
       }
       return res.status(200).send("");
     },
