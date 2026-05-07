@@ -1,47 +1,45 @@
+<div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
 
+  <h1 class="text-2xl font-bold mb-4">Create Event</h1>
 
-<h1>Create Event</h1>
+  <form method="POST" action="/events" class="space-y-4">
 
-<form 
-  hx-post="/events"
-  hx-target="#event-result"
-  hx-swap="innerHTML"
->
-<div id="event-result"></div>
-  <div>
-    <label>Title</label>
-    <input type="text" name="title" required />
-  </div>
+    <!-- Title -->
+    <input 
+      name="title"
+      placeholder="Event Title"
+      class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+    />
 
-  <div>
-    <label>Description</label>
-    <input type="text" name="description" required />
-  </div>
+    <!-- Description -->
+    <textarea 
+      name="description"
+      placeholder="Event Description"
+      class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+    ></textarea>
 
-  <div>
-    <label>Location</label>
-    <input type="text" name="location" required />
-  </div>
+    <!-- Location -->
+    <input 
+      name="location"
+      placeholder="Location"
+      class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+    />
 
-  <div>
-    <label>Category</label>
-    <input type="text" name="category" required />
-  </div>
+    <!-- Category -->
+    <input 
+      name="category"
+      placeholder="Category"
+      class="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+    />
 
-  <div>
-    <label>Capacity (optional)</label>
-    <input type="number" name="capacity" />
-  </div>
+    <!-- Submit -->
+    <button 
+      type="submit"
+      class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+    >
+      Create Event
+    </button>
 
-  <div>
-    <label>Start Date</label>
-    <input type="datetime-local" name="startDatetime" required />
-  </div>
+  </form>
 
-  <div>
-    <label>End Date</label>
-    <input type="datetime-local" name="endDatetime" required />
-  </div>
-
-  <button type="submit">Create Event</button>
-</form>
+</div>
