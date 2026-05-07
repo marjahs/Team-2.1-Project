@@ -1,0 +1,37 @@
+<h1>Filter Events</h1>
+
+<form
+  hx-get="/events/filter"
+  hx-target="#filter-results"
+  hx-swap="innerHTML"
+  style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;"
+>
+  <div>
+    <label for="category"><strong>Category</strong></label><br>
+    <select name="category" id="category" style="padding: 8px; min-width: 160px;">
+      <option value="">All Categories</option>
+      <option value="social">Social</option>
+      <option value="educational">Educational</option>
+      <option value="volunteer">Volunteer</option>
+      <option value="sports">Sports</option>
+      <option value="arts">Arts</option>
+    </select>
+  </div>
+  <div>
+    <label for="startDatetime"><strong>From</strong></label><br>
+    <input type="datetime-local" name="startDatetime" id="startDatetime" style="padding: 8px;">
+  </div>
+  <div>
+    <label for="endDatetime"><strong>To</strong></label><br>
+    <input type="datetime-local" name="endDatetime" id="endDatetime" style="padding: 8px;">
+  </div>
+  <div>
+    <button type="submit" style="padding: 8px 16px;">Filter</button>
+  </div>
+</form>
+
+<hr>
+
+<div id="filter-results">
+  <%- include('../partials/filter-results', { events: events }) %>
+</div>

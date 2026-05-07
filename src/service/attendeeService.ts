@@ -1,8 +1,8 @@
 import { Ok, Err, type Result } from '../lib/result'
 import { inMemoryEventRepository } from '../events/InMemoryEventRepository'
 import { InMemoryRsvpRepository } from '../repository/InMemoryRsvpRepository'
-
-const rsvpRepository = new InMemoryRsvpRepository()
+import type { EventRepository } from '../events/EventRepository'
+import type { IRsvpRepository } from '../repository/RsvpRepository'
 
 export interface AttendeeInfo {
   userId: string
@@ -27,29 +27,35 @@ export class AttendeeUnauthorizedError extends Error {
 
 export type GetAttendeesError = AttendeeEventNotFoundError | AttendeeUnauthorizedError
 
+// Default to inMemory so tests work without calling setEventRepository
+let _eventRepo: EventRepository = inMemoryEventRepository
+let _rsvpRepo: IRsvpRepository = new InMemoryRsvpRepository()
+
+export function setEventRepository(repo: EventRepository): void {
+  _eventRepo = repo
+}
+
+export function setRsvpRepository(repo: IRsvpRepository): void {
+  _rsvpRepo = repo
+}
+
 export async function getAttendeesForEvent(
   eventId: string,
   requestingUserId: string,
   requestingUserRole: string
 ): Promise<Result<AttendeeInfo[], GetAttendeesError>> {
-
-  // Rule 1: Event must exist
-  const event = await inMemoryEventRepository.findById(eventId)
+  const event = await _eventRepo.findById(eventId)
   if (!event) return Err(new AttendeeEventNotFoundError())
 
-  // Rule 2: Only organizer or admin can view
   const isOrganizer = event.organizerId === requestingUserId
   const isAdmin = requestingUserRole === 'admin'
   if (!isOrganizer && !isAdmin) return Err(new AttendeeUnauthorizedError())
 
-  // Fetch RSVPs for this event
-  const rsvps = await rsvpRepository.listByEvent(eventId)
+  const rsvps = await _rsvpRepo.listByEvent(eventId)
 
-  // Map RSVPs to attendee info
-  // Note: no user repository exists yet so displayName falls back to userId
   const attendees: AttendeeInfo[] = rsvps.map(rsvp => ({
     userId: rsvp.userId,
-    displayName: rsvp.userId, // replace with user lookup if user repo is added later
+    displayName: rsvp.userId,
     status: rsvp.status,
     createdAt: rsvp.createdAt,
   }))

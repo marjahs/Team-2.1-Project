@@ -1,0 +1,66 @@
+<div id="event-actions"
+     x-data="{ flash: false }"
+     x-init="
+       document.body.addEventListener('htmx:afterSwap', function(e) {
+         if (e.detail.target.id === 'event-actions') {
+           flash = true;
+           setTimeout(() => flash = false, 600);
+         }
+       })
+     ">
+
+  <%# Status badge with distinct color per state %>
+  <div class="flex items-center gap-4 mb-4">
+    <span
+      x-bind:class="flash ? 'scale-110' : 'scale-100'"
+      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold transition-transform duration-300
+        <% if (event.status === 'draft') { %>
+          bg-slate-100 text-slate-600 border border-slate-300
+        <% } else if (event.status === 'published') { %>
+          bg-green-100 text-green-700 border border-green-300
+        <% } else if (event.status === 'cancelled') { %>
+          bg-red-100 text-red-700 border border-red-300
+        <% } else if (event.status === 'past') { %>
+          bg-yellow-100 text-yellow-700 border border-yellow-300
+        <% } %>
+      ">
+      <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+    </span>
+  </div>
+
+  <% const isOrganizer = session.authenticatedUser?.userId === event.organizerId %>
+  <% const isAdmin = session.authenticatedUser?.role === 'admin' %>
+
+  <% if (isOrganizer || isAdmin) { %>
+    <div class="flex gap-3 flex-wrap">
+
+      <% if (event.status === 'draft') { %>
+        <form hx-post="/events/<%= event.id %>/publish"
+              hx-target="#event-actions"
+              hx-swap="outerHTML">
+          <button type="submit"
+            class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors cursor-pointer">
+            Publish Event
+          </button>
+        </form>
+      <% } %>
+
+      <% if (event.status === 'draft' || event.status === 'published') { %>
+        <form hx-post="/events/<%= event.id %>/cancel"
+              hx-target="#event-actions"
+              hx-swap="outerHTML">
+          <button type="submit"
+            class="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors cursor-pointer">
+            Cancel Event
+          </button>
+        </form>
+      <% } %>
+
+      <% if (event.status === 'cancelled' || event.status === 'past') { %>
+        <p class="text-sm text-slate-500 italic">No further actions available.</p>
+      <% } %>
+
+    </div>
+  <% } %>
+
+</div>

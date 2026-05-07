@@ -1,0 +1,91 @@
+<div id="attendee-list" class="mt-4">
+
+  <% if (grouped.attending.length === 0 && grouped.waitlisted.length === 0 && grouped.cancelled.length === 0) { %>
+    <p class="text-slate-500 italic text-sm">No one has RSVP'd yet.</p>
+  <% } %>
+
+  <%# Attending group %>
+  <% if (grouped.attending.length > 0) { %>
+    <div class="mb-4">
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-green-700 uppercase tracking-wide mb-2">
+        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+        Attending (<%= grouped.attending.length %>)
+      </h3>
+      <div class="rounded-xl border border-green-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-green-50 text-green-700">
+            <tr>
+              <th class="text-left px-4 py-2 font-medium">Name</th>
+              <th class="text-left px-4 py-2 font-medium">RSVP'd At</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-green-100">
+            <% grouped.attending.forEach(function(a) { %>
+              <tr class="bg-white hover:bg-green-50 transition-colors">
+                <td class="px-4 py-2 text-slate-800 font-medium"><%= a.displayName %></td>
+                <td class="px-4 py-2 text-slate-500"><%= new Date(a.createdAt).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+  <%# Waitlisted group %>
+  <% if (grouped.waitlisted.length > 0) { %>
+    <div class="mb-4">
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-yellow-700 uppercase tracking-wide mb-2">
+        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+        Waitlisted (<%= grouped.waitlisted.length %>)
+      </h3>
+      <div class="rounded-xl border border-yellow-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-yellow-50 text-yellow-700">
+            <tr>
+              <th class="text-left px-4 py-2 font-medium">Name</th>
+              <th class="text-left px-4 py-2 font-medium">RSVP'd At</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-yellow-100">
+            <% grouped.waitlisted.forEach(function(a) { %>
+              <tr class="bg-white hover:bg-yellow-50 transition-colors">
+                <td class="px-4 py-2 text-slate-800 font-medium"><%= a.displayName %></td>
+                <td class="px-4 py-2 text-slate-500"><%= new Date(a.createdAt).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+  <%# Cancelled group %>
+  <% if (grouped.cancelled.length > 0) { %>
+    <div class="mb-4">
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        Cancelled (<%= grouped.cancelled.length %>)
+      </h3>
+      <div class="rounded-xl border border-slate-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="text-left px-4 py-2 font-medium">Name</th>
+              <th class="text-left px-4 py-2 font-medium">RSVP'd At</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% grouped.cancelled.forEach(function(a) { %>
+              <tr class="bg-white hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-2 text-slate-500"><%= a.displayName %></td>
+                <td class="px-4 py-2 text-slate-400"><%= new Date(a.createdAt).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+</div>

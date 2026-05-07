@@ -1,4 +1,19 @@
-import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import path from "path";
+
+const dbUrl = `file:${path.resolve(process.cwd(), "dev.db")}`;
+
+let prisma: PrismaClient;
+try {
+  const adapter = new PrismaBetterSqlite3({
+    url: dbUrl,
+  });
+  prisma = new PrismaClient({ adapter });
+} catch (e: any) {
+  console.error("PRISMA INIT ERROR:", e.message);
+  throw e;
+}
 
 export interface Comment {
   id: string;
@@ -8,31 +23,37 @@ export interface Comment {
   createdAt: Date;
 }
 
-const comments: Comment[] = [];
-
-export function createComment(eventId: string, userId: string, text: string): Comment {
-  const comment: Comment = {
-    id: randomUUID(),
-    eventId,
-    userId,
-    text,
-    createdAt: new Date(),
-  };
-  comments.push(comment);
-  return comment;
+export async function createComment(
+  eventId: string,
+  userId: string,
+  text: string
+): Promise<Comment> {
+  return await prisma.comment.create({
+    data: { eventId, userId, text },
+  });
 }
 
-export function getCommentsByEvent(eventId: string): Comment[] {
-  return comments.filter((c) => c.eventId === eventId);
+export async function getCommentsByEvent(eventId: string): Promise<Comment[]> {
+  return await prisma.comment.findMany({
+    where: { eventId },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
-export function getCommentById(commentId: string): Comment | undefined {
-  return comments.find((c) => c.id === commentId);
+export async function getCommentById(
+  commentId: string
+): Promise<Comment | undefined> {
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+  });
+  return comment ?? undefined;
 }
 
-export function deleteComment(commentId: string): boolean {
-  const index = comments.findIndex((c) => c.id === commentId);
-  if (index === -1) return false;
-  comments.splice(index, 1);
-  return true;
+export async function deleteComment(commentId: string): Promise<boolean> {
+  try {
+    await prisma.comment.delete({ where: { id: commentId } });
+    return true;
+  } catch {
+    return false;
+  }
 }

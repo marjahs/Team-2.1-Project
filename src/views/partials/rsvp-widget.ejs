@@ -1,0 +1,38 @@
+<%
+  const status = rsvp ? rsvp.status : null;
+
+  const buttonLabel =
+    status === "going"
+      ? "Cancel RSVP"
+      : status === "waitlisted"
+        ? "Leave waitlist"
+        : status === "cancelled"
+          ? "Reactivate RSVP"
+          : "RSVP";
+%>
+
+<div id="rsvp-widget" class="mt-6 flex items-center gap-4">
+  <form
+    action="/events/<%= event.id %>/rsvp/toggle"
+    method="POST"
+    hx-post="/events/<%= event.id %>/rsvp/toggle"
+    hx-target="#rsvp-widget"
+    hx-swap="outerHTML"
+    class="m-0"
+  >
+    <button
+      type="submit"
+      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+    >
+      <%= buttonLabel %>
+    </button>
+  </form>
+
+  <span class="text-sm text-slate-600">
+    <% if (status) { %>
+      Current status: <%= status %>
+    <% } else { %>
+      Click to RSVP.
+    <% } %>
+  </span>
+</div>

@@ -1,0 +1,39 @@
+<section class="mt-6 md:max-w-2xl">
+  <h2 class="text-lg font-semibold text-slate-800 mb-4">Comments</h2>
+
+  <div id="comment-error"></div>
+
+  <div x-data="{ count: 0, max: 500 }" class="mb-6">
+    <form hx-post="/events/<%= eventId %>/comments"
+          hx-target="#comment-list"
+          hx-swap="beforeend"
+          hx-on::after-request="if(event.detail.successful) { this.reset(); count = 0 }">
+      <textarea
+        name="text"
+        x-on:input="count = $event.target.value.length"
+        placeholder="Write a comment..."
+        maxlength="500"
+        required
+        rows="3"
+        class="w-full p-3 border border-slate-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+      <div class="flex justify-between items-center mt-1 mb-3">
+        <p class="text-xs text-slate-400">
+          <span x-text="count"></span> / <span x-text="max"></span> characters
+        </p>
+      </div>
+      <button type="submit"
+              class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+        Post Comment
+      </button>
+    </form>
+  </div>
+
+  <% if (comments.length === 0) { %>
+    <p class="text-slate-500 text-sm">No comments yet. Be the first to comment!</p>
+  <% } %>
+  <ul id="comment-list" class="flex flex-col gap-3">
+    <% comments.forEach(function(comment) { %>
+      <%- include('comment-item', { comment, currentUserId, userRole }) %>
+    <% }) %>
+  </ul>
+</section>

@@ -1,0 +1,15 @@
+<li id="comment-<%= comment.id %>" class="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
+  <p class="text-sm text-slate-800 mb-2"><%= comment.text %></p>
+  <div class="flex justify-between items-center">
+    <small class="text-xs text-slate-400"><%= comment.authorId %></small>
+    <% if (currentUserId === comment.authorId || userRole === 'organizer') { %>
+      <button
+        hx-delete="/events/<%= comment.eventId %>/comments/<%= comment.id %>"
+        hx-target="#comment-<%= comment.id %>"
+        hx-swap="outerHTML"
+        class="text-xs text-red-500 hover:underline cursor-pointer bg-transparent border-0 p-0">
+        Delete
+      </button>
+    <% } %>
+  </div>
+</li>

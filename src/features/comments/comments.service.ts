@@ -1,10 +1,4 @@
-import {
-  createComment,
-  deleteComment,
-  getCommentById,
-  getCommentsByEvent,
-  type Comment,
-} from "./comments.repo.js";
+import type { Comment } from "./comments.repo.js";
 import { type Result, Ok, Err } from "../../lib/result.js";
 
 export class InvalidInputError extends Error {
@@ -28,44 +22,28 @@ export class UnauthorizedError extends Error {
   }
 }
 
-export function postComment(
-  eventId: string,
-  userId: string,
-  text: string
-): Result<Comment, InvalidInputError> {
-  if (!text || text.trim() === "") {
-    return Err(new InvalidInputError("Comment cannot be empty"));
-  }
-  if (text.length > 500) {
-    return Err(new InvalidInputError("Comment cannot exceed 500 characters"));
-  }
-  const comment = createComment(eventId, userId, text.trim());
-  return Ok(comment);
-}
+export type CommentRepo = {
+  createComment: (eventId: string, userId: string, text: string) => Promise<Comment>;
+  getCommentsByEvent: (eventId: string) => Promise<Comment[]>;
+  getCommentById: (commentId: string) => Promise<Comment | undefined>;
+  deleteComment: (commentId: string) => Promise<boolean>;
+};
 
-export function getComments(
-  eventId: string
-): Result<Comment[], never> {
-  const result = getCommentsByEvent(eventId);
-  return Ok(result);
-}
-
-export function removeComment(
-  commentId: string,
-  userId: string,
-  userRole: string,
-  organizerId: string
-): Result<{ id: string; deleted: boolean }, CommentNotFoundError | UnauthorizedError> {
-  const comment = getCommentById(commentId);
-  if (!comment) {
-    return Err(new CommentNotFoundError());
-  }
-  const isAuthor = comment.userId === userId;
-  const isOrganizer = userId === organizerId;
-  const isAdmin = userRole === "admin";
-  if (!isAuthor && !isOrganizer && !isAdmin) {
-    return Err(new UnauthorizedError());
-  }
-  deleteComment(commentId);
-  return Ok({ id: commentId, deleted: true });
+export function createCommentService(repo: CommentRepo) {
+  return {
+    postComment: async (eventId: string, userId: string, text: string) => {
+      if (!text || text.trim() === "") return Err(new InvalidInputError("Comment cannot be empty"));
+      if (text.length > 500) return Err(new InvalidInputError("Comment cannot exceed 500 characters"));
+      return Ok(await repo.createComment(eventId, userId, text.trim()));
+    },
+    getComments: async (eventId: string) => Ok(await repo.getCommentsByEvent(eventId)),
+    removeComment: async (commentId: string, userId: string, userRole: string, organizerId: string) => {
+      const comment = await repo.getCommentById(commentId);
+      if (!comment) return Err(new CommentNotFoundError());
+      if (!(comment.userId === userId || userId === organizerId || userRole === "admin"))
+        return Err(new UnauthorizedError());
+      await repo.deleteComment(commentId);
+      return Ok({ id: commentId, deleted: true });
+    },
+  };
 }

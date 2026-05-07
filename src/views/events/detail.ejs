@@ -1,6 +1,57 @@
-<h1><%= event.title %></h1>
-<p><%= event.description %></p>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+  <h1 class="text-2xl font-bold text-slate-900 mb-4"><%= event.title %></h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 mb-6">
+    <p><span class="font-medium text-slate-800">Description:</span> <%= event.description %></p>
+    <p><span class="font-medium text-slate-800">Location:</span> <%= event.location %></p>
+    <p><span class="font-medium text-slate-800">Category:</span> <%= event.category %></p>
+    <p><span class="font-medium text-slate-800">Capacity:</span> <%= event.capacity ?? "Unlimited" %></p>
+    <p><span class="font-medium text-slate-800">Start:</span> <%= new Date(event.startDatetime).toLocaleString() %></p>
+    <p><span class="font-medium text-slate-800">End:</span> <%= new Date(event.endDatetime).toLocaleString() %></p>
+  </div>
 
-<form method="POST" action="/events/<%= event.id %>/rsvp/toggle">
-  <button type="submit">Toggle RSVP</button>
-</form>
+  <%# --- Publish / Cancel controls (Feature 5) --- %>
+  <%- include("../partials/event-actions", { event, session }) %>
+</div>
+
+<%# --- RSVP widget (Feature 4, members only) --- %>
+<% if (session.authenticatedUser?.role === 'member') { %>
+  <%- include("../partials/rsvp-widget", { event, rsvp: null }) %>
+<% } %>
+
+<%# --- Attendee list button (Feature 12, organizer/admin only) --- %>
+<% const isOrganizer = session.authenticatedUser?.userId === event.organizerId %>
+<% const isAdmin = session.authenticatedUser?.role === 'admin' %>
+<% if (isOrganizer || isAdmin) { %>
+  <div class="mt-6" x-data="{ open: false }">
+    <button
+      x-on:click="
+        open = !open;
+        if (open) {
+          htmx.trigger($el, 'loadAttendees');
+        }
+      "
+      hx-get="/events/<%= event.id %>/attendees"
+      hx-target="#attendee-panel"
+      hx-swap="innerHTML"
+      hx-trigger="loadAttendees"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+      <span x-text="open ? 'Hide Attendees' : 'View Attendees'">View Attendees</span>
+      <svg x-bind:class="open ? 'rotate-180' : ''"
+           class="w-4 h-4 transition-transform duration-200"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div id="attendee-panel"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-1"
+         class="mt-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+    </div>
+  </div>
+<% } %>
