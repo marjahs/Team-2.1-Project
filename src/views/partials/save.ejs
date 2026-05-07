@@ -1,31 +1,48 @@
-<section class="saved-events-section">
-  <h2>Saved Events</h2>
+<section class="mt-4">
+  <h2 class="text-lg font-semibold text-slate-800 mb-4">Saved Events</h2>
 
-  <!-- Save/Unsave button for event detail page -->
   <% if (typeof eventId !== 'undefined') { %>
-    <button id="save-btn"
-          hx-post="/events/<%= eventId %>/save"
-          hx-target="#save-btn"
-          hx-swap="outerHTML"
-          class="px-4 py-2 rounded-lg border font-medium text-sm cursor-pointer">
-      <%= isSaved ? '★ Saved' : '☆ Save for Later' %>
-    </button>
+    <div x-data="{ justSaved: false }" class="flex items-center gap-3">
+      <button id="save-btn"
+              hx-post="/events/<%= eventId %>/save"
+              hx-target="#save-btn"
+              hx-swap="outerHTML"
+              x-on:click="justSaved = true; setTimeout(() => justSaved = false, 2000)"
+              class="px-4 py-2 rounded-lg border font-medium text-sm cursor-pointer transition-colors
+                <%= isSaved
+                  ? 'bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200'
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' %>">
+        <%= isSaved ? '★ Saved' : '☆ Save for Later' %>
+      </button>
+      <span x-show="justSaved"
+            x-transition
+            class="text-xs text-green-600 font-medium">
+        Saved!
+      </span>
+    </div>
   <% } %>
 
-  <!-- Saved events list page -->
   <% if (typeof savedEvents !== 'undefined') { %>
     <% if (savedEvents.length === 0) { %>
-      <p>You have no saved events yet.</p>
+      <p class="text-slate-500 text-sm">You have no saved events yet.</p>
     <% } else { %>
-      <% savedEvents.forEach(function(saved) { %>
-        <div class="saved-event">
-          <p><strong>Event ID:</strong> <%= saved.eventId %></p>
-          <p><small>Saved on: <%= saved.createdAt %></small></p>
-          <form action="/events/<%= saved.eventId %>/save" method="POST">
-            <button type="submit">Unsave</button>
-          </form>
-        </div>
-      <% }) %>
+      <div class="flex flex-col gap-3">
+        <% savedEvents.forEach(function(saved) { %>
+          <div id="saved-<%= saved.id %>"
+               class="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="font-medium text-sm text-slate-800">Event ID: <%= saved.eventId %></p>
+              <small class="text-xs text-slate-400">Saved on: <%= new Date(saved.createdAt).toLocaleString() %></small>
+            </div>
+            <button hx-post="/events/<%= saved.eventId %>/save"
+                    hx-target="#saved-<%= saved.id %>"
+                    hx-swap="outerHTML"
+                    class="text-xs text-red-500 hover:underline cursor-pointer bg-transparent border-0 p-0">
+              Unsave
+            </button>
+          </div>
+        <% }) %>
+      </div>
     <% } %>
   <% } %>
 </section>

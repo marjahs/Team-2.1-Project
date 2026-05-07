@@ -104,7 +104,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   );
 
   const eventRepository = testEventRepository;
-  const rsvpRepository = new InMemoryRsvpRepository(); // ✅ FIXED
+  const rsvpRepository = new PrismaRsvpRepository();
+  setEventRepository(eventRepository);
+  setAttendeeEventRepo(eventRepository);
+  setRsvpRepository(rsvpRepository);
 
   const eventService = new EventService(eventRepository);
   const eventController = CreateEventController(eventService);

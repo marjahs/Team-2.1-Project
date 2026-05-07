@@ -41,9 +41,8 @@ class EventController implements IEventController {
       });
     }
 
-  
     if (req.get("HX-Request") === "true") {
-      return res.status(200).render("partials/filter-results", {
+      return res.render("partials/filter-results", {
         events: result.value,
         layout: false,
       });
@@ -53,6 +52,10 @@ class EventController implements IEventController {
       events: result.value,
       pageError: null,
       session: recordPageView(req.session as any),
+      category: typeof category === "string" ? category : "",
+      startDatetime: typeof startDatetime === "string" ? startDatetime : "",
+      endDatetime: typeof endDatetime === "string" ? endDatetime : "",
+      session: req.session,
     });
   }
 
@@ -82,6 +85,7 @@ class EventController implements IEventController {
       events,
       pageError: null,
       session: recordPageView(req.session as any),
+      session: req.session,
     });
   }
 
