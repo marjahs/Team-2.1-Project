@@ -60,7 +60,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  const eventRepository = new PrismaEventRepository();
+  const eventRepository = testEventRepository;
   const rsvpRepository = new PrismaRsvpRepository();
   setEventRepository(eventRepository);
   setAttendeeEventRepo(eventRepository);

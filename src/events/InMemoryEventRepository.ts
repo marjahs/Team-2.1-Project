@@ -29,11 +29,10 @@ export class InMemoryEventRepository implements EventRepository {
 
   async searchPublished(query: string): Promise<Event[]> {
     const q = query.toLowerCase().trim();
-    const now = new Date();
 
     return this.events.filter((event) => {
       if (event.status !== "published") return false;
-      if (event.startDatetime < now) return false;
+      if (event.startDatetime < new Date()) return false;
       if (!q) return true;
 
       return (

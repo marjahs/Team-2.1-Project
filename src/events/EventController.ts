@@ -43,11 +43,23 @@ class EventController implements IEventController {
       return;
     }
 
-    res.status(200).json(result.value);
+    if (req.get("HX-Request") === "true") {
+      return res.render("partials/filter-results", {
+        events: result.value,
+        layout: false,
+      });
+    }
+
+    return res.status(200).render("events/filter", {
+      events: result.value,
+      category: typeof category === "string" ? category : "",
+      startDatetime: typeof startDatetime === "string" ? startDatetime : "",
+      endDatetime: typeof endDatetime === "string" ? endDatetime : "",
+      session: req.session,
+    });
   }
 
   async searchEvents(req: Request, res: Response): Promise<void> {
-  
     const { q } = req.query;
 
     const result = await this.eventService.searchPublishedEvents({
@@ -67,7 +79,7 @@ class EventController implements IEventController {
       query: typeof q === "string" ? q : "",
       events: result.value,
       pageError: null,
-      session: browserSession,
+      session: req.session,
     });
   }
 
@@ -129,7 +141,7 @@ class EventController implements IEventController {
         layout: false,
       });
     }
-    
+
     return res.redirect(`/events/${result.value.id}`);
   }
 }
