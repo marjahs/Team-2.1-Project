@@ -13,7 +13,7 @@ import { InMemoryEventRepository } from "./events/InMemoryEventRepository";
 import { EventService } from "./events/EventService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
-import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository"; // ✅ FIXED
+import { InMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { RsvpController } from "./features/rsvp/RsvpController";
 import * as commentRepo from "./features/comments/InMemoryCommentRepository.js";

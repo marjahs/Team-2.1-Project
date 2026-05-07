@@ -4,13 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Project Starter</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   </head>
-  <body class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-900 p-6">
+
+  <body class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-900 px-4 sm:px-6 lg:px-8 py-6">
+
     <div class="max-w-5xl mx-auto">
+
       <nav class="flex items-center justify-between gap-3 mb-6 flex-wrap">
+
+        <!-- Logo -->
         <a
           href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
           class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-lg font-bold text-slate-900 no-underline"
@@ -18,29 +23,59 @@
           <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-b from-blue-400 to-blue-600"></span>
           Project Starter
         </a>
+
+        <!-- Right Side -->
         <div class="flex items-center gap-3 flex-wrap">
+
+          
+          <a href="/events/new" class="px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-700 font-medium">
+            Create Event
+          </a>
+
+          <a href="/events/search" class="px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-700 font-medium">
+            Search Events
+          </a>
+
           <% if (session?.authenticatedUser) { %>
+
             <% if (session.authenticatedUser.role === "admin") { %>
-              <a href="/admin/users" class="text-blue-700 font-semibold no-underline hover:underline">Manage Users</a>
+              <a href="/admin/users" class="px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-700 font-medium">
+                Manage Users
+              </a>
             <% } %>
-            <span class="text-slate-500">
-              Signed in as <strong class="text-slate-700"><%= session.authenticatedUser.displayName %></strong>
+
+            <span class="text-slate-500 text-sm">
+              Signed in as 
+              <strong class="text-slate-700">
+                <%= session.authenticatedUser.displayName %>
+              </strong>
               (<%= session.authenticatedUser.role %>)
             </span>
+
             <form method="post" action="/logout" class="m-0">
               <button
                 type="submit"
-                class="px-3.5 py-2 rounded-lg bg-white text-blue-700 border border-slate-200 cursor-pointer hover:bg-blue-50 text-sm font-medium"
+                class="px-3.5 py-2 rounded-lg bg-white text-blue-700 border border-slate-200 cursor-pointer hover:bg-blue-50 hover:scale-105 transition text-sm font-medium"
               >
                 Log out
               </button>
             </form>
+
           <% } else { %>
-            <a href="/login" class="text-blue-700 font-semibold no-underline hover:underline">Log in</a>
+
+            <a href="/login" class="text-blue-700 font-semibold no-underline hover:underline">
+              Log in
+            </a>
+
           <% } %>
+
         </div>
       </nav>
-      <main class="max-w-5xl mx-auto"><%- body %></main>
+
+      <main class="max-w-5xl mx-auto">
+        <%- body %>
+      </main>
+
     </div>
   </body>
 </html>
