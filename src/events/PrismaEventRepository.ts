@@ -4,7 +4,7 @@ import type { Event, EventStatus } from "./Event.js";
 import type { EventFilter, EventRepository } from "./EventRepository.js";
 
 const adapter = new PrismaBetterSqlite3({
-  url: "file:./dev.db",
+  url: process.env.DATABASE_URL!,
 });
 
 const prisma = new PrismaClient({ adapter });
