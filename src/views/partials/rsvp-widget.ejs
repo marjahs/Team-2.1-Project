@@ -9,9 +9,35 @@
         : status === "cancelled"
           ? "Reactivate RSVP"
           : "RSVP";
+
+  const buttonClass =
+    status === "going"
+      ? "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+      : status === "waitlisted"
+        ? "bg-amber-500 hover:bg-amber-600 focus:ring-amber-400"
+        : status === "cancelled"
+          ? "bg-violet-600 hover:bg-violet-700 focus:ring-violet-500"
+          : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500";
 %>
 
-<div id="rsvp-widget" class="mt-6 flex items-center gap-4">
+<div
+  id="rsvp-widget"
+  x-data="{ busy: false }"
+  x-on:htmx:beforeRequest="busy = true"
+  x-on:htmx:afterRequest="busy = false"
+  class="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+>
+  <div>
+    <h2 class="text-base font-semibold text-slate-900">Your RSVP</h2>
+    <p class="text-sm text-slate-600 mt-1">
+      <% if (status) { %>
+        Current status: <span class="font-medium text-slate-800"><%= status %></span>
+      <% } else { %>
+        Click below to RSVP to this event.
+      <% } %>
+    </p>
+  </div>
+
   <form
     action="/events/<%= event.id %>/rsvp/toggle"
     method="POST"
@@ -22,17 +48,11 @@
   >
     <button
       type="submit"
-      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+      x-bind:disabled="busy"
+      class="inline-flex items-center justify-center min-w-36 px-4 py-2.5 rounded-lg text-white font-semibold shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-wait <%= buttonClass %>"
     >
-      <%= buttonLabel %>
+      <span x-show="!busy"><%= buttonLabel %></span>
+      <span x-show="busy" x-cloak>Updating…</span>
     </button>
   </form>
-
-  <span class="text-sm text-slate-600">
-    <% if (status) { %>
-      Current status: <%= status %>
-    <% } else { %>
-      Click to RSVP.
-    <% } %>
-  </span>
 </div>
