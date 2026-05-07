@@ -1,3 +1,6 @@
+import { PrismaRsvpRepository } from "./repository/PrismaRsvpRepository";
+import { setEventRepository } from "./service/eventPublishingService";
+import { setEventRepository as setAttendeeEventRepo, setRsvpRepository } from "./service/attendeeService";
 import { CreateAdminUserService } from "./auth/AdminUserService";
 import { CreateAuthController } from "./auth/AuthController";
 import { CreateAuthService } from "./auth/AuthService";

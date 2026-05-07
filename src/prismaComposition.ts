@@ -1,3 +1,6 @@
+import { PrismaRsvpRepository } from "./repository/PrismaRsvpRepository";
+import { setEventRepository } from "./service/eventPublishingService";
+import { setEventRepository as setAttendeeEventRepo, setRsvpRepository } from "./service/attendeeService";
 import { CreateAdminUserService } from "./auth/AdminUserService";
 import { CreateAuthController } from "./auth/AuthController";
 import { CreateAuthService } from "./auth/AuthService";
@@ -33,6 +36,9 @@ export function createPrismaComposedApp(logger?: ILoggingService): IApp {
 
   const eventRepository = new InMemoryEventRepository();
   const rsvpRepository = new InMemoryRsvpRepository();
+  setEventRepository(eventRepository);
+  setAttendeeEventRepo(eventRepository);
+  setRsvpRepository(rsvpRepository);
 
   eventRepository.events.push(
     {

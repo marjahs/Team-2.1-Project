@@ -55,7 +55,6 @@ class EventController implements IEventController {
       category: typeof category === "string" ? category : "",
       startDatetime: typeof startDatetime === "string" ? startDatetime : "",
       endDatetime: typeof endDatetime === "string" ? endDatetime : "",
-      session: req.session,
     });
   }
 
@@ -85,7 +84,6 @@ class EventController implements IEventController {
       events,
       pageError: null,
       session: recordPageView(req.session as any),
-      session: req.session,
     });
   }
 
