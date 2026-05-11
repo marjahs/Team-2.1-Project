@@ -29,45 +29,61 @@ class EventController implements IEventController {
 
     if (!result.ok) {
       if (result.value instanceof InvalidDateRangeError) {
-        res.status(400).render("partials/error", {
+        return res.status(400).render("partials/error", {
           message: result.value.message,
           layout: false,
         });
-        return;
       }
 
-      res.status(500).render("partials/error", {
+      return res.status(500).render("partials/error", {
         message: "Unexpected server error.",
         layout: false,
       });
-      return;
     }
 
-    res.status(200).json(result.value);
+    if (req.get("HX-Request") === "true") {
+      return res.render("partials/filter-results", {
+        events: result.value,
+        layout: false,
+      });
+    }
+
+    return res.status(200).render("events/filter", {
+      events: result.value,
+      pageError: null,
+      session: recordPageView(req.session as any),
+      category: typeof category === "string" ? category : "",
+      startDatetime: typeof startDatetime === "string" ? startDatetime : "",
+      endDatetime: typeof endDatetime === "string" ? endDatetime : "",
+    });
   }
 
   async searchEvents(req: Request, res: Response): Promise<void> {
-  
     const { q } = req.query;
 
+    const cleanedQuery =
+      typeof q === "string" && q.trim().length > 0
+        ? q.trim()
+        : undefined;
+
     const result = await this.eventService.searchPublishedEvents({
-      query: typeof q === "string" ? q : undefined,
+      query: cleanedQuery,
     });
 
-    const browserSession = recordPageView(req.session as any);
+    const events = result.ok ? result.value : [];
 
     if (req.get("HX-Request") === "true") {
-      return res.render("partials/search-results", {
-        events: result.value,
+      return res.status(200).render("partials/search-results", {
+        events,
         layout: false,
       });
     }
 
     return res.status(200).render("events/search", {
       query: typeof q === "string" ? q : "",
-      events: result.value,
+      events,
       pageError: null,
-      session: browserSession,
+      session: recordPageView(req.session as any),
     });
   }
 
@@ -129,7 +145,7 @@ class EventController implements IEventController {
         layout: false,
       });
     }
-    
+
     return res.redirect(`/events/${result.value.id}`);
   }
 }
