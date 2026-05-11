@@ -3,14 +3,14 @@
 
   <div id="comment-error"></div>
 
-  <div x-data="{ count: 0, max: 500 }" class="mb-6">
+  <div class="mb-6">
     <form hx-post="/events/<%= eventId %>/comments"
           hx-target="#comment-list"
           hx-swap="beforeend"
-          hx-on::after-request="if(event.detail.successful) { this.reset(); count = 0 }">
+          hx-on::after-request="if(event.detail.successful) { this.reset(); document.getElementById('char-count').textContent = 0 }">
       <textarea
         name="text"
-        x-on:input="count = $event.target.value.length"
+        oninput="document.getElementById('char-count').textContent = this.value.length"
         placeholder="Write a comment..."
         maxlength="500"
         required
@@ -18,7 +18,7 @@
         class="w-full p-3 border border-slate-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
       <div class="flex justify-between items-center mt-1 mb-3">
         <p class="text-xs text-slate-400">
-          <span x-text="count"></span> / <span x-text="max"></span> characters
+          <span id="char-count">0</span> / 500 characters
         </p>
       </div>
       <button type="submit"
